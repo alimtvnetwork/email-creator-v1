@@ -39,7 +39,7 @@ function bootstrap(): void {
   const setter = new ReactInputSetter();
   const delays = new DelayController(config.delays);
   const retry = new RetryPolicy(() => config.delays, logger);
-  const runner = new StepRunner(() => config.xpaths, resolver, setter, delays, logger, retry);
+  const runner = new StepRunner(() => config.xpaths, () => config.runtime, resolver, setter, delays, logger, retry);
   const ledger = new CycleLedger();
   const csv = new CsvExporter();
   const orchestrator = new SequenceOrchestrator(() => config, runner, logger, ledger);
