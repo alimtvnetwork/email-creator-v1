@@ -107,6 +107,16 @@ export class StepRunner {
     return this.runtime().dryRun === true;
   }
 
+  private emailValueForField(email: string, el: Element): string {
+    return this.hasDomainSuffix(el) ? email.split("@")[0] : email;
+  }
+
+  private hasDomainSuffix(el: Element): boolean {
+    const next = el.nextElementSibling;
+    const text = (next?.textContent || "").trim();
+    return /^@[^\s@]+\.[^\s@]+$/.test(text);
+  }
+
   private highlight(el: Element, note: string): void {
     const html = el as HTMLElement;
     const prevOutline = html.style.outline;
