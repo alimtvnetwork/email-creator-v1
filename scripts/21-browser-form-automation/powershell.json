@@ -1,0 +1,14 @@
+{
+  "$schema": "./powershell.schema.json",
+  "browser": "chrome",
+  "profile": "Default",
+
+  "chromeExePath": "",
+  "edgeExePath": "",
+
+  "chromeUserDataDir": "",
+  "edgeUserDataDir": "",
+
+  "killBeforeLaunch": true,
+  "extraChromeArgs": []
+}
