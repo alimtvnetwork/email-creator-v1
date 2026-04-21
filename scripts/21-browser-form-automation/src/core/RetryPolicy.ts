@@ -1,7 +1,13 @@
 // Generic retry-with-exponential-backoff helper. Pure logic; the timing
-// source is injected so tests can stub it.
+// source is injected so tests can stub it. Returns the value plus the
+// attempt count so callers can record observability metrics.
 import type { DelayConfig } from "../config/types";
 import { Logger } from "./Logger";
+
+export interface RetryOutcome<T> {
+  value: T;
+  attempts: number;   // total attempts used (1 = succeeded first try)
+}
 
 export class RetryPolicy {
   constructor(
@@ -11,12 +17,14 @@ export class RetryPolicy {
   ) {}
 
   /** Run `task`; on throw, wait backoff and retry up to retryAttempts. */
-  async run<T>(label: string, task: () => Promise<T> | T): Promise<T> {
+  async run<T>(label: string, task: () => Promise<T> | T): Promise<RetryOutcome<T>> {
     const attempts = Math.max(1, this.getConfig().retryAttempts);
     let lastError: unknown;
     for (let attempt = 1; attempt <= attempts; attempt++) {
-      try { return await task(); }
-      catch (err) {
+      try {
+        const value = await task();
+        return { value, attempts: attempt };
+      } catch (err) {
         lastError = err;
         if (attempt === attempts) break;
         await this.waitBefore(label, attempt, err);
