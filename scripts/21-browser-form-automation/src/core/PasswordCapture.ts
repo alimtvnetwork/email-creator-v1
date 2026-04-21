@@ -14,6 +14,10 @@ const SCAN_WAIT_MS = 6000;
 const SCAN_POLL_MS = 150;
 const PASSWORD_MIN_LEN = 6;
 const PASSWORD_MAX_LEN = 128;
+// Number of times we will re-click Generate if no new password appears
+// inside the wait window. Each retry runs a fresh wait + scan cycle.
+const GENERATE_MAX_RETRIES = 3;
+const GENERATE_RETRY_WAIT_MS = 3500;
 // Reject only literal placeholder strings. Anything else that *changes* after
 // Generate is considered a real password — even if it superficially resembles
 // a placeholder, the baseline-change check is the real source of truth.
