@@ -1,22 +1,31 @@
-// Bundles src/runtime/main.ts into a single IIFE and emits three artifacts:
-//   dist/bundle.js       — paste-into-DevTools IIFE
-//   dist/bookmarklet.txt — legacy inline bookmarklet (may exceed browser URL limits)
-//   dist/loader.txt      — tiny loader bookmarklet that fetches bundle.js from a URL
-// The loader is the recommended delivery path once the bundle grows past the
-// ~160 KB inline ceiling. Operator edits BUNDLE_URL_PLACEHOLDER in loader.txt
-// to point at wherever bundle.js is hosted (GitHub raw, Pages, local server…).
+// Bundles src/runtime/main.ts into a single IIFE and emits four artifacts:
+//   dist/bundle.js          — paste-into-DevTools IIFE
+//   dist/bookmarklet.txt    — legacy inline bookmarklet (may exceed browser URL limits)
+//   dist/loader.txt         — tiny loader bookmarklet that fetches bundle.js from a URL
+//   extension/bundle.js     — same IIFE, copied for the MV3 wrapper
+//   extension/version.json  — { version, builtAt } for the popup to display
+//
+// The loader is the recommended bookmarklet path once the bundle grows past
+// the ~160 KB inline ceiling. The extension wrapper is the recommended path
+// for repeat use; run.ps1 -D auto-deploys it to your Chrome profile.
 import { build } from "esbuild";
-import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const distDir = resolve(here, "dist");
+const extDir = resolve(here, "extension");
 mkdirSync(distDir, { recursive: true });
+mkdirSync(extDir, { recursive: true });
 
 const bundlePath = resolve(distDir, "bundle.js");
 const bookmarkletPath = resolve(distDir, "bookmarklet.txt");
 const loaderPath = resolve(distDir, "loader.txt");
+const extBundlePath = resolve(extDir, "bundle.js");
+const extVersionPath = resolve(extDir, "version.json");
+
+const pkg = JSON.parse(readFileSync(resolve(here, "package.json"), "utf8"));
 
 await build({
   entryPoints: [resolve(here, "src/runtime/main.ts")],
@@ -27,7 +36,7 @@ await build({
   platform: "browser",
   legalComments: "none",
   minify: false,
-  banner: { js: "/* scripts/21-browser-form-automation — paste into DevTools */" },
+  banner: { js: "/* scripts/21-browser-form-automation v" + pkg.version + " — paste into DevTools */" },
 });
 
 const bundleSrc = readFileSync(bundlePath, "utf8");
@@ -57,7 +66,18 @@ const loaderBody =
 const loader = "javascript:" + encodeURIComponent(loaderBody);
 writeFileSync(loaderPath, loader, "utf8");
 
+// Mirror bundle into the MV3 extension folder + emit version metadata.
+copyFileSync(bundlePath, extBundlePath);
+writeFileSync(extVersionPath, JSON.stringify({
+  version: pkg.version,
+  builtAt: new Date().toISOString(),
+  bundleBytes,
+}, null, 2) + "\n", "utf8");
+
 const kb = (n) => (n / 1024).toFixed(1) + " KB";
-console.log("bundle:      " + bundlePath + "  (" + kb(bundleBytes) + ")");
-console.log("bookmarklet: " + bookmarkletPath + "  (inline, " + kb(inline.length) + ")");
-console.log("loader:      " + loaderPath + "  (fetches bundle from " + BUNDLE_URL_PLACEHOLDER + ")");
+console.log("bundle:        " + bundlePath + "  (" + kb(bundleBytes) + ")");
+console.log("bookmarklet:   " + bookmarkletPath + "  (inline, " + kb(inline.length) + ")");
+console.log("loader:        " + loaderPath + "  (fetches bundle from " + BUNDLE_URL_PLACEHOLDER + ")");
+console.log("extension/js:  " + extBundlePath);
+console.log("extension/ver: " + extVersionPath + "  (v" + pkg.version + ")");
+
