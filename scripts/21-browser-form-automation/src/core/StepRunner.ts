@@ -57,7 +57,17 @@ export class StepRunner {
     this.clickElement(el, this.xpaths().passwordGenerate);
     const delayMs = await this.delays.betweenSteps();
     this.events.record({ step: "clickGeneratePassword", status: "clicked", attempts, delayMs });
-    return this.passwordCapture.capture(before);
+    return this.passwordCapture.capture(before, () => this.reclickGenerate());
+  }
+
+  /** Re-click the Generate button (used by PasswordCapture retry loop). */
+  private async reclickGenerate(): Promise<void> {
+    const xpath = this.xpaths().passwordGenerate;
+    const el = this.resolver.resolve(xpath);
+    if (!el) { this.log.warn("step", "Generate button missing on retry"); return; }
+    this.clickElement(el, xpath);
+    const delayMs = await this.delays.betweenSteps();
+    this.events.record({ step: "clickGeneratePassword", status: "clicked", attempts: 1, delayMs });
   }
 
   /** Click the create button, then wait the randomized post-create delay. */
