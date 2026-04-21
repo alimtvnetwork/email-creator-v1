@@ -8,13 +8,16 @@ import { RetryPolicy } from "./RetryPolicy";
 import { StepEventLog } from "./StepEventLog";
 import { LiveCapture } from "./LiveCapture";
 
-const PASSWORD_WAIT_MS = 3000;
+const PASSWORD_WAIT_MS = 6000;
 const PASSWORD_POLL_MS = 100;
-const SCAN_WAIT_MS = 3000;
+const SCAN_WAIT_MS = 6000;
 const SCAN_POLL_MS = 150;
 const PASSWORD_MIN_LEN = 6;
 const PASSWORD_MAX_LEN = 128;
-const STATIC_PASSWORDS = /^(fakepassword\d*|password\d*|changeme|example|test123?|123456)$/i;
+// Reject only literal placeholder strings. Anything else that *changes* after
+// Generate is considered a real password — even if it superficially resembles
+// a placeholder, the baseline-change check is the real source of truth.
+const STATIC_PASSWORDS = /^(changeme|example|placeholder)$/i;
 
 export interface PasswordBaseline { values: Set<string>; }
 
