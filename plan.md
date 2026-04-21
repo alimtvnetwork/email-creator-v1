@@ -25,6 +25,7 @@
 - [x] **v0.8** — Loader bookmarklet (`dist/loader.txt`, ~500 bytes) that fetches `bundle.js` from a hosted URL, bypassing the inline bookmarklet size limit; inline `bookmarklet.txt` retained for small-bundle fallback
 - [x] **v0.9** — Run-control hotkeys: Space = pause/resume, Esc = stop, Enter = start/next; HotkeyController ignores events from panel inputs/textareas/selects and contenteditable targets
 - [x] **v0.10** — XPath validator: each XPath field has a Validate button (plus Validate-all); resolves the XPath, scroll-into-view + green/red flash on the hit, inline status (`✓ <input> visible` / `✗ no match`)
+- [x] **v0.11** — Structured execution log: `StepEventLog` records every step (found/missing, attempts used, delay applied, error, cycleIndex, email, ISO timestamp); panel shows event counter under the live log with **Export log JSON** + **Clear events** buttons; bounded ring buffer (2000 entries)
 
 ### Open follow-ups (non-manual)
 
