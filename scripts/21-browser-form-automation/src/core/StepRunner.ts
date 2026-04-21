@@ -174,6 +174,54 @@ export class StepRunner {
     return (el.textContent || "").trim();
   }
 
+  /** Heuristic last-resort scan: poll inputs/text near the Generate button. */
+  private async scanForPassword(): Promise<string> {
+    const emailTyped = this.lastEmailTyped();
+    const deadline = Date.now() + SCAN_WAIT_MS;
+    while (Date.now() < deadline) {
+      const value = this.scanOnce(emailTyped);
+      if (value) return value;
+      await this.sleep(SCAN_POLL_MS);
+    }
+    return "";
+  }
+
+  private scanOnce(emailTyped: string): string {
+    const root = this.scanRoot();
+    if (!root) return "";
+    for (const el of Array.from(root.querySelectorAll("input, textarea"))) {
+      const v = this.readValue(el);
+      if (this.looksLikePassword(v, emailTyped)) return v;
+    }
+    for (const el of Array.from(root.querySelectorAll("span, code, div, p"))) {
+      if (el.children.length > 0) continue;
+      const v = (el.textContent || "").trim();
+      if (this.looksLikePassword(v, emailTyped)) return v;
+    }
+    return "";
+  }
+
+  private scanRoot(): Element | null {
+    const generate = this.resolver.resolve(this.xpaths().passwordGenerate);
+    if (!generate) return document.body;
+    return generate.closest("form") || generate.closest("section") || document.body;
+  }
+
+  private looksLikePassword(v: string, emailTyped: string): boolean {
+    if (!v) return false;
+    if (v.length < PASSWORD_MIN_LEN || v.length > PASSWORD_MAX_LEN) return false;
+    if (/\s/.test(v)) return false;
+    if (v === emailTyped) return false;
+    if (v.includes("@")) return false;
+    return true;
+  }
+
+  private lastEmailTyped(): string {
+    const el = this.resolver.resolve(this.xpaths().emailField);
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) return el.value;
+    return "";
+  }
+
   private requireEl(name: string, xpath: string): Element {
     const el = this.resolver.resolve(xpath);
     if (!el) throw new Error('Element "' + name + '" not found via XPath');
