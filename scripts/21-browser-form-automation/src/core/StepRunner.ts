@@ -38,12 +38,13 @@ export class StepRunner {
   /** Click the email field, type the address, then wait the inter-step delay. */
   async fillEmail(email: string): Promise<void> {
     const { el, attempts } = await this.resolveStep("fillEmail", "emailField", this.xpaths().emailField);
-    if (this.isDryRun()) return this.skipWithDelay(el, "fillEmail", attempts, 'would fill email "' + email + '"');
+    const value = this.emailValueForField(email, el);
+    if (this.isDryRun()) return this.skipWithDelay(el, "fillEmail", attempts, 'would fill email "' + value + '"');
     this.clickElement(el, this.xpaths().emailField);
     await this.delays.betweenSteps();
-    this.setter.setValue(el, email);
+    this.setter.setValue(el, value);
     this.setter.blur(el);
-    this.log.info("step", 'Email set to "' + email + '"');
+    this.log.info("step", 'Email field set to "' + value + '" for account "' + email + '"');
     const delayMs = await this.delays.betweenSteps();
     this.events.record({ step: "fillEmail", status: "filled", attempts, delayMs });
   }
@@ -104,6 +105,16 @@ export class StepRunner {
 
   private isDryRun(): boolean {
     return this.runtime().dryRun === true;
+  }
+
+  private emailValueForField(email: string, el: Element): string {
+    return this.hasDomainSuffix(el) ? email.split("@")[0] : email;
+  }
+
+  private hasDomainSuffix(el: Element): boolean {
+    const next = el.nextElementSibling;
+    const text = (next?.textContent || "").trim();
+    return /^@[^\s@]+\.[^\s@]+$/.test(text);
   }
 
   private highlight(el: Element, note: string): void {
