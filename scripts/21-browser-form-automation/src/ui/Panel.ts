@@ -251,6 +251,8 @@ export class Panel {
     this.deps.logger.snapshot().forEach((line) => this.appendLog(line));
     this.refreshPreview();
   }
+
+  private buildControls(): HTMLElement {
     const start = el("button", { class: "btn primary" }, ["Start"]);
     const stop  = el("button", { class: "btn danger" }, ["Stop"]);
     this.nextBtn = el("button", { class: "btn" }, ["Next"]) as HTMLButtonElement;
