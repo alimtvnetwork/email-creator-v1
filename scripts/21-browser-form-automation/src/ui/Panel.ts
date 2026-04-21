@@ -15,6 +15,7 @@ import { ConfigCsvExporter } from "../core/ConfigCsvExporter";
 import { XPathValidator } from "../core/XPathValidator";
 import { StepEventLog, type StepEvent } from "../core/StepEventLog";
 import { JsonLogExporter } from "../core/JsonLogExporter";
+import { LiveCapture, type LiveCaptureState } from "../core/LiveCapture";
 import { PANEL_CSS } from "./styles";
 import { ToastHost } from "./ToastHost";
 import { el } from "./dom";
@@ -33,6 +34,7 @@ interface PanelDeps {
   validator: XPathValidator;
   events: StepEventLog;
   jsonExporter: JsonLogExporter;
+  live: LiveCapture;
 }
 
 export class Panel {
@@ -46,10 +48,14 @@ export class Panel {
   private resultsCountEl!: HTMLSpanElement;
   private progressEl!: HTMLSpanElement;
   private eventCountEl!: HTMLSpanElement;
+  private liveEmailEl!: HTMLSpanElement;
+  private livePasswordEl!: HTMLSpanElement;
+  private liveSourceEl!: HTMLSpanElement;
   private toast!: ToastHost;
   private unsubscribeLedger?: () => void;
   private unsubscribeProgress?: () => void;
   private unsubscribeEvents?: () => void;
+  private unsubscribeLive?: () => void;
 
   constructor(private readonly deps: PanelDeps) {}
 
@@ -69,6 +75,8 @@ export class Panel {
     this.unsubscribeProgress = this.deps.orchestrator.subscribe((p) => this.refreshProgress(p));
     this.unsubscribeEvents?.();
     this.unsubscribeEvents = this.deps.events.subscribe((evs) => this.refreshEventCount(evs));
+    this.unsubscribeLive?.();
+    this.unsubscribeLive = this.deps.live.subscribe((s) => this.refreshLiveCapture(s));
     this.refreshResults(this.deps.ledger.snapshot());
     this.refreshEventCount(this.deps.events.snapshot());
     this.refreshPreview();
