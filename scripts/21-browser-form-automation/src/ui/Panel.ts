@@ -43,9 +43,11 @@ export class Panel {
   private profileSelect!: HTMLSelectElement;
   private resultsCountEl!: HTMLSpanElement;
   private progressEl!: HTMLSpanElement;
+  private eventCountEl!: HTMLSpanElement;
   private toast!: ToastHost;
   private unsubscribeLedger?: () => void;
   private unsubscribeProgress?: () => void;
+  private unsubscribeEvents?: () => void;
 
   constructor(private readonly deps: PanelDeps) {}
 
