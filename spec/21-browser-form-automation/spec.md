@@ -138,7 +138,7 @@ active profile pointer under `xp21.activeProfile.v1`.
 | `background.js` | Service worker; on `action.onClicked`, injects `bundle.js` into the active tab via `chrome.scripting.executeScript` (file: `bundle.js`, world `MAIN`) |
 | `popup.html` / `popup.js` | Optional popup with **Activate panel on this tab** + version stamp from `version.json` |
 | `bundle.js` | Copied from `dist/bundle.js` at build time |
-| `icon.png` | 128×128 toolbar icon |
+| `icon.png` | Valid PNG toolbar icon (Chrome rejects mismatched image formats) |
 
 The panel never auto-injects: it appears only when the operator clicks the
 toolbar icon (or the popup button). One-time `Ctrl+Shift+X` toggle still

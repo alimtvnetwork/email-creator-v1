@@ -17,4 +17,6 @@ CSV exports:
 
 Hotkeys remappable (v0.13) with conflict warnings (typing-prone / browser-shortcut detection, ⚠ badge + tooltip).
 
-Versioning: bump both `package.json` and `extension/manifest.json` on each milestone. Current: v0.14.0.
+Extension wrapper requires `extension/icon.png` to be a true PNG file; Chrome can reject/list nothing when the icon extension and actual encoding mismatch.
+
+Versioning: bump both `package.json` and `extension/manifest.json` on each milestone. Current: v0.15.0.
