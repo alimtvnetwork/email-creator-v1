@@ -17,6 +17,10 @@ const HIGHLIGHT_STYLE = "2px solid #f59e0b";
 const HIGHLIGHT_SHADOW = "0 0 0 3px rgba(245,158,11,.35)";
 const PASSWORD_WAIT_MS = 3000;
 const PASSWORD_POLL_MS = 100;
+const SCAN_WAIT_MS = 3000;
+const SCAN_POLL_MS = 150;
+const PASSWORD_MIN_LEN = 6;
+const PASSWORD_MAX_LEN = 128;
 
 export class StepRunner {
   constructor(
@@ -63,11 +67,16 @@ export class StepRunner {
       const fallbackResult = await this.tryCaptureFrom("passwordFieldFallback", fallback);
       if (fallbackResult.value) return this.recordCaptured(fallbackResult);
     }
+    this.log.warn("step", "Configured XPaths empty — scanning nearby fields");
+    const scanned = await this.scanForPassword();
+    if (scanned) {
+      return this.recordCaptured({ name: "heuristic-scan", value: scanned, attempts: 1 });
+    }
     this.events.record({
       step: "capturePassword", status: "missing",
-      attempts: primaryResult.attempts, error: "empty after wait (primary + fallback)",
+      attempts: primaryResult.attempts, error: "empty after wait (primary + fallback + scan)",
     });
-    throw new Error("Password element resolved but value stayed empty (primary + fallback)");
+    throw new Error("Password element resolved but value stayed empty (primary + fallback + scan)");
   }
 
   private async tryCaptureFrom(
@@ -163,6 +172,54 @@ export class StepRunner {
   private readValue(el: Element): string {
     if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) return el.value;
     return (el.textContent || "").trim();
+  }
+
+  /** Heuristic last-resort scan: poll inputs/text near the Generate button. */
+  private async scanForPassword(): Promise<string> {
+    const emailTyped = this.lastEmailTyped();
+    const deadline = Date.now() + SCAN_WAIT_MS;
+    while (Date.now() < deadline) {
+      const value = this.scanOnce(emailTyped);
+      if (value) return value;
+      await this.sleep(SCAN_POLL_MS);
+    }
+    return "";
+  }
+
+  private scanOnce(emailTyped: string): string {
+    const root = this.scanRoot();
+    if (!root) return "";
+    for (const el of Array.from(root.querySelectorAll("input, textarea"))) {
+      const v = this.readValue(el);
+      if (this.looksLikePassword(v, emailTyped)) return v;
+    }
+    for (const el of Array.from(root.querySelectorAll("span, code, div, p"))) {
+      if (el.children.length > 0) continue;
+      const v = (el.textContent || "").trim();
+      if (this.looksLikePassword(v, emailTyped)) return v;
+    }
+    return "";
+  }
+
+  private scanRoot(): Element | null {
+    const generate = this.resolver.resolve(this.xpaths().passwordGenerate);
+    if (!generate) return document.body;
+    return generate.closest("form") || generate.closest("section") || document.body;
+  }
+
+  private looksLikePassword(v: string, emailTyped: string): boolean {
+    if (!v) return false;
+    if (v.length < PASSWORD_MIN_LEN || v.length > PASSWORD_MAX_LEN) return false;
+    if (/\s/.test(v)) return false;
+    if (v === emailTyped) return false;
+    if (v.includes("@")) return false;
+    return true;
+  }
+
+  private lastEmailTyped(): string {
+    const el = this.resolver.resolve(this.xpaths().emailField);
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) return el.value;
+    return "";
   }
 
   private requireEl(name: string, xpath: string): Element {
