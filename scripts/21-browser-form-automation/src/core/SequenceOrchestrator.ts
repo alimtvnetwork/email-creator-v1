@@ -8,6 +8,7 @@ import { StepRunner } from "./StepRunner";
 import { Logger } from "./Logger";
 import { CycleLedger } from "./CycleLedger";
 import { StepEventLog } from "./StepEventLog";
+import { LiveCapture } from "./LiveCapture";
 
 export type RunState = "idle" | "running" | "pausing" | "paused" | "stopping";
 
@@ -31,6 +32,7 @@ export class SequenceOrchestrator {
     private readonly log: Logger,
     private readonly ledger: CycleLedger,
     private readonly events: StepEventLog,
+    private readonly live: LiveCapture,
   ) {}
 
   /** Subscribe to progress changes; returns an unsubscribe function. */
@@ -125,6 +127,7 @@ export class SequenceOrchestrator {
   private async runOne(email: string): Promise<void> {
     const cycleIndex = this.cursor + 1;
     this.events.beginCycle(cycleIndex, email);
+    this.live.beginCycle(cycleIndex, email);
     this.events.record({ step: "cycle", status: "cycle-start" });
     this.log.info("cycle", "Begin " + email);
     try {

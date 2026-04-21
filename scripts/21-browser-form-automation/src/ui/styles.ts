@@ -65,6 +65,11 @@ export const PANEL_CSS = `
   .xpath-status { font-family: ui-monospace, monospace; font-size: 11px; color: #6b7280; }
   .xpath-status.ok   { color: #4ade80; }
   .xpath-status.fail { color: #f87171; }
+  .live-row { display: flex; align-items: baseline; gap: 6px; font-size: 11px; margin: 2px 0; flex-wrap: wrap; }
+  .live-row strong { color: #cbd5e1; min-width: 64px; }
+  .live-val { font-family: ui-monospace, monospace; color: #f1f5f9; word-break: break-all; }
+  .live-pw  { color: #fde68a; }
+  .live-src { color: #94a3b8; font-style: italic; }
 
   .toast-host {
     position: absolute; bottom: 12px; left: 12px; right: 12px;

