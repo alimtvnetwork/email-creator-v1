@@ -11,6 +11,7 @@ import { CycleLedger } from "../core/CycleLedger";
 import { CsvExporter } from "../core/CsvExporter";
 import { RetryPolicy } from "../core/RetryPolicy";
 import { XPathResolver } from "../xpath/resolver";
+import { XPathValidator } from "../core/XPathValidator";
 import { HotkeyController } from "../core/HotkeyController";
 import { Panel } from "../ui/Panel";
 
@@ -43,8 +44,9 @@ function bootstrap(): void {
   const ledger = new CycleLedger();
   const csv = new CsvExporter();
   const orchestrator = new SequenceOrchestrator(() => config, runner, logger, ledger);
+  const validator = new XPathValidator(resolver);
 
-  new Panel({ config, store, profiles, fileIO, logger, orchestrator, delays, ledger, csv }).mount();
+  new Panel({ config, store, profiles, fileIO, logger, orchestrator, delays, ledger, csv, validator }).mount();
   const host = document.getElementById("xp21-host");
   if (host) new HotkeyController(logger, orchestrator).attach(host);
   logger.info("boot", "Panel mounted (active profile: " + activeName + ")");
