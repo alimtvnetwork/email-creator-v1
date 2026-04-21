@@ -11,6 +11,7 @@ import { EmailSequenceGenerator } from "../core/EmailSequenceGenerator";
 import { DelayController } from "../core/DelayController";
 import { CycleLedger, type CycleRecord } from "../core/CycleLedger";
 import { CsvExporter } from "../core/CsvExporter";
+import { XPathValidator } from "../core/XPathValidator";
 import { PANEL_CSS } from "./styles";
 import { ToastHost } from "./ToastHost";
 import { el } from "./dom";
@@ -25,6 +26,7 @@ interface PanelDeps {
   delays: DelayController;
   ledger: CycleLedger;
   csv: CsvExporter;
+  validator: XPathValidator;
 }
 
 export class Panel {
