@@ -89,14 +89,44 @@ export class Panel {
   }
 
   private buildHeader(): HTMLElement {
+    const help = el("button", { title: "Show hotkeys" }, ["?"]) as HTMLButtonElement;
+    help.addEventListener("click", (ev) => { ev.stopPropagation(); this.toggleHotkeyHelp(); });
     const close = el("button", { title: "Close" }, ["×"]);
     close.addEventListener("click", () => (this.root.host as HTMLElement).remove());
     const header = el("div", { class: "header" }, [
       el("h1", {}, ["Form Automation · #21"]),
-      el("div", { class: "actions" }, [close]),
+      el("div", { class: "actions" }, [help, close]),
     ]);
     this.enableDrag(header);
     return header;
+  }
+
+  private toggleHotkeyHelp(): void {
+    const existing = this.root.querySelector(".hotkey-help");
+    if (existing) { existing.remove(); return; }
+    const rows: Array<[string, string]> = [
+      ["Space",        "Pause / Resume"],
+      ["Esc",          "Stop"],
+      ["Enter",        "Start / Resume"],
+      ["Ctrl+Shift+X", "Toggle panel"],
+    ];
+    const list = el("div", { class: "hotkey-list" },
+      rows.flatMap(([k, d]) => [
+        el("kbd", {}, [k]),
+        el("span", {}, [d]),
+      ]),
+    );
+    const closeBtn = el("button", { class: "hotkey-close", title: "Close" }, ["×"]);
+    const overlay = el("div", { class: "hotkey-help" }, [
+      el("div", { class: "hotkey-head" }, [
+        el("strong", {}, ["Hotkeys"]),
+        closeBtn,
+      ]),
+      list,
+      el("div", { class: "hotkey-hint" }, ["Hotkeys are ignored while typing in inputs."]),
+    ]);
+    closeBtn.addEventListener("click", () => overlay.remove());
+    this.root.querySelector(".root")?.appendChild(overlay);
   }
 
   private buildSequenceSection(): HTMLElement {

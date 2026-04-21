@@ -79,4 +79,28 @@ export const PANEL_CSS = `
   .toast.success { background: #065f46; border-color: #047857; }
   .toast.error   { background: #7f1d1d; border-color: #991b1b; }
   .toast.leaving { opacity: 0; transform: translateY(6px); }
+
+  .hotkey-help {
+    position: absolute; top: 44px; right: 12px; z-index: 20;
+    width: 220px; padding: 10px 12px;
+    background: #111827; border: 1px solid #374151; border-radius: 6px;
+    box-shadow: 0 10px 24px rgba(0,0,0,.5);
+    color: #e5e7eb; font-size: 11px;
+  }
+  .hotkey-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .hotkey-head strong { font-size: 12px; color: #f3f4f6; }
+  .hotkey-close {
+    background: transparent; border: 0; color: #9ca3af; cursor: pointer;
+    font-size: 14px; padding: 0 4px; line-height: 1;
+  }
+  .hotkey-list {
+    display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: center;
+  }
+  .hotkey-list kbd {
+    font-family: ui-monospace, monospace; font-size: 10px;
+    background: #0b1220; border: 1px solid #374151; border-bottom-width: 2px;
+    border-radius: 3px; padding: 2px 6px; color: #93c5fd; white-space: nowrap;
+  }
+  .hotkey-list span { color: #d1d5db; }
+  .hotkey-hint { margin-top: 8px; color: #6b7280; font-size: 10px; }
 `;
