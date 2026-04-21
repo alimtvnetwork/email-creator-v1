@@ -126,6 +126,10 @@ export class Panel {
         this.numberField("Post-create min", d.postCreateMinMs, (n) => { d.postCreateMinMs = n; onChange(); }),
         this.numberField("Post-create max", d.postCreateMaxMs, (n) => { d.postCreateMaxMs = n; onChange(); }),
       ]),
+      el("div", { class: "row" }, [
+        this.numberField("Retry attempts", d.retryAttempts, (n) => { d.retryAttempts = n; onChange(); }),
+        this.numberField("Retry backoff", d.retryBackoffMs, (n) => { d.retryBackoffMs = n; onChange(); }),
+      ]),
     ]);
   }
 
