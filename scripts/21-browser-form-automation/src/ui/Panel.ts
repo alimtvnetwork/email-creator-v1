@@ -32,10 +32,14 @@ export class Panel {
   private logEl!: HTMLDivElement;
   private previewEl!: HTMLDivElement;
   private nextBtn!: HTMLButtonElement;
+  private startBtn!: HTMLButtonElement;
+  private pauseBtn!: HTMLButtonElement;
   private profileSelect!: HTMLSelectElement;
   private resultsCountEl!: HTMLSpanElement;
+  private progressEl!: HTMLSpanElement;
   private toast!: ToastHost;
   private unsubscribeLedger?: () => void;
+  private unsubscribeProgress?: () => void;
 
   constructor(private readonly deps: PanelDeps) {}
 
@@ -51,6 +55,8 @@ export class Panel {
     this.deps.logger.snapshot().forEach((line) => this.appendLog(line));
     this.unsubscribeLedger?.();
     this.unsubscribeLedger = this.deps.ledger.subscribe((records) => this.refreshResults(records));
+    this.unsubscribeProgress?.();
+    this.unsubscribeProgress = this.deps.orchestrator.subscribe((p) => this.refreshProgress(p));
     this.refreshResults(this.deps.ledger.snapshot());
     this.refreshPreview();
   }
@@ -265,16 +271,43 @@ export class Panel {
   }
 
   private buildControls(): HTMLElement {
-    const start = el("button", { class: "btn primary" }, ["Start"]);
+    this.startBtn = el("button", { class: "btn primary" }, ["Start"]) as HTMLButtonElement;
+    this.pauseBtn = el("button", { class: "btn" }, ["Pause"]) as HTMLButtonElement;
     const stop  = el("button", { class: "btn danger" }, ["Stop"]);
     this.nextBtn = el("button", { class: "btn" }, ["Next"]) as HTMLButtonElement;
     this.nextBtn.disabled = this.deps.config.runtime.mode !== "manual";
     const reset = el("button", { class: "btn" }, ["Reset"]);
-    start.addEventListener("click", () => void this.deps.orchestrator.start());
+    this.startBtn.addEventListener("click", () => void this.deps.orchestrator.start());
+    this.pauseBtn.addEventListener("click", () => this.handlePauseToggle());
     stop.addEventListener("click", () => this.deps.orchestrator.stop());
     this.nextBtn.addEventListener("click", () => void this.deps.orchestrator.next());
     reset.addEventListener("click", () => this.deps.orchestrator.reset());
-    return el("div", { class: "controls" }, [start, stop, this.nextBtn, reset]);
+    this.progressEl = el("span", { class: "progress" }, ["0 / 0 · idle"]);
+    return el("div", { class: "controls-wrap" }, [
+      el("div", { class: "controls" }, [this.startBtn, this.pauseBtn, stop, this.nextBtn, reset]),
+      this.progressEl,
+    ]);
+  }
+
+  private handlePauseToggle(): void {
+    const snap = this.deps.orchestrator.snapshot();
+    if (snap.state === "paused") void this.deps.orchestrator.resume();
+    else this.deps.orchestrator.pause();
+  }
+
+  private refreshProgress(p: { cursor: number; total: number; state: string }): void {
+    if (!this.progressEl) return;
+    this.progressEl.textContent = p.cursor + " / " + p.total + " · " + p.state;
+    if (this.startBtn) {
+      this.startBtn.textContent = p.state === "paused" ? "Resume" : "Start";
+      this.startBtn.disabled = p.state === "running" || p.state === "pausing";
+    }
+    if (this.pauseBtn) {
+      const canPause = p.state === "running";
+      const canResume = p.state === "paused";
+      this.pauseBtn.disabled = !(canPause || canResume);
+      this.pauseBtn.textContent = canResume ? "Resume" : "Pause";
+    }
   }
 
   private buildResultsSection(): HTMLElement {
