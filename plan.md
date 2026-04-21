@@ -17,9 +17,16 @@
 - [x] `run.ps1` (git pull → npm install → build)
 - [x] Typecheck + bundle verified locally
 - [x] **v0.2** — Multi-profile localStorage manager, JSON import/export, explicit Save/Save As/Delete/Defaults buttons, in-panel toast feedback
+- [x] **v0.3** — Global hotkey `Ctrl+Shift+X` to toggle panel visibility (persisted in localStorage)
 
-### Open follow-ups
+### Open follow-ups (non-manual, in priority order)
+
+- CSV export of generated emails (index + timestamp) — button in Sequence section.
+- Progress indicator (`current / total`) + true Pause distinct from Stop.
+- Per-step retry with backoff before failing a cycle.
+- Dry-run mode — resolve + highlight elements, skip clicks/fills.
+- Loader bookmarklet to avoid the ~128 KB inline limit.
+
+### Open follow-ups (manual, on hold)
 
 - Manual smoke test against the real target page.
-- Optional: export generated emails as CSV from the panel.
-- Optional: keyboard shortcut to toggle the panel.

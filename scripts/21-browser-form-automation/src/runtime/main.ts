@@ -8,6 +8,7 @@ import { ReactInputSetter } from "../core/ReactInputSetter";
 import { StepRunner } from "../core/StepRunner";
 import { SequenceOrchestrator } from "../core/SequenceOrchestrator";
 import { XPathResolver } from "../xpath/resolver";
+import { HotkeyController } from "../core/HotkeyController";
 import { Panel } from "../ui/Panel";
 
 declare global { interface Window { __xp21Mounted?: boolean; } }
@@ -38,6 +39,8 @@ function bootstrap(): void {
   const orchestrator = new SequenceOrchestrator(() => config, runner, logger);
 
   new Panel({ config, store, profiles, fileIO, logger, orchestrator, delays }).mount();
+  const host = document.getElementById("xp21-host");
+  if (host) new HotkeyController(logger).attach(host);
   logger.info("boot", "Panel mounted (active profile: " + activeName + ")");
 }
 
