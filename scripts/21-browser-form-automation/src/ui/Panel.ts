@@ -9,6 +9,8 @@ import { Logger, type LogLine } from "../core/Logger";
 import { SequenceOrchestrator } from "../core/SequenceOrchestrator";
 import { EmailSequenceGenerator } from "../core/EmailSequenceGenerator";
 import { DelayController } from "../core/DelayController";
+import { CycleLedger, type CycleRecord } from "../core/CycleLedger";
+import { CsvExporter } from "../core/CsvExporter";
 import { PANEL_CSS } from "./styles";
 import { ToastHost } from "./ToastHost";
 import { el } from "./dom";
@@ -21,6 +23,8 @@ interface PanelDeps {
   logger: Logger;
   orchestrator: SequenceOrchestrator;
   delays: DelayController;
+  ledger: CycleLedger;
+  csv: CsvExporter;
 }
 
 export class Panel {
@@ -29,7 +33,9 @@ export class Panel {
   private previewEl!: HTMLDivElement;
   private nextBtn!: HTMLButtonElement;
   private profileSelect!: HTMLSelectElement;
+  private resultsCountEl!: HTMLSpanElement;
   private toast!: ToastHost;
+  private unsubscribeLedger?: () => void;
 
   constructor(private readonly deps: PanelDeps) {}
 
@@ -56,6 +62,7 @@ export class Panel {
         this.buildDelaySection(),
         this.buildRuntimeSection(),
         this.buildControls(),
+        this.buildResultsSection(),
         this.buildLog(),
       ]),
     ]);
