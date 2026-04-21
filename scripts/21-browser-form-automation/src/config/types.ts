@@ -7,12 +7,14 @@ export interface SequenceConfig {
   pattern: string;       // contains the literal placeholder PLACEHOLDER_TOKEN
   padding: number;       // zero-pad width of the numeric segment
   domain: string;        // appended after "@"
-  rangeStart: number;    // inclusive
-  rangeEnd: number;      // inclusive
+  rangeStart: number;    // next numeric value to run
+  rangeEnd: number;      // legacy/export end marker, kept in sync with count
+  count: number;         // number of emails to process per run
 }
 
 export interface XPathConfig {
   emailField: string;
+  passwordField: string;
   passwordGenerate: string;
   createButton: string;
 }

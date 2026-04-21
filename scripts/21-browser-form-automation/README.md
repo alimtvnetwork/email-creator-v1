@@ -2,7 +2,7 @@
 
 Injectable script that fills a 3-step form (email → generate password →
 create) for a sequence of generated email addresses, with a floating UI
-to tweak XPaths, delays, and the sequence pattern at runtime.
+to tweak XPaths, delays, sequence pattern, and per-run email count at runtime.
 
 ## Build
 
@@ -25,3 +25,12 @@ Produces:
 
 See `spec/21-browser-form-automation/spec.md` for the full schema. The
 panel persists edits in `localStorage` under `xp21.config.v1`.
+
+## v0.16 operator notes
+
+- Set **Next number** to the first email number to create.
+- Set **How many emails** to the batch size for this run.
+- When a batch completes, XP21 advances **Next number** automatically so the
+  next run continues instead of repeating.
+- Results CSV now exports `email` and `password` together.
+- After rebuilding, reload the unpacked extension from `chrome://extensions`.

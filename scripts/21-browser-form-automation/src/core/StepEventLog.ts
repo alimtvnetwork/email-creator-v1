@@ -12,6 +12,7 @@ export type StepStatus =
   | "missing"        // element resolution failed (after retries)
   | "clicked"
   | "filled"
+  | "captured"
   | "skipped-dryrun"
   | "cycle-start"
   | "cycle-success"

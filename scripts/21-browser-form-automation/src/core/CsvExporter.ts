@@ -2,7 +2,7 @@
 // Strings are quoted only when needed so the file stays human-friendly.
 import type { CycleRecord } from "./CycleLedger";
 
-const HEADER = ["index", "email", "status", "timestamp_iso", "error"] as const;
+const HEADER = ["index", "email", "password", "status", "timestamp_iso", "error"] as const;
 
 export class CsvExporter {
   /** Trigger a browser download of the records as CSV. */
@@ -28,6 +28,7 @@ export class CsvExporter {
     return [
       String(r.index),
       this.escape(r.email),
+      this.escape(r.password ?? ""),
       r.status,
       iso,
       this.escape(r.error ?? ""),
