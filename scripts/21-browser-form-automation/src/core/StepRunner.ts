@@ -30,7 +30,7 @@ export class StepRunner {
     private readonly log: Logger,
     private readonly retry: RetryPolicy,
     private readonly events: StepEventLog,
-    private readonly live: LiveCapture,
+    live: LiveCapture,
   ) {
     this.passwordCapture = new PasswordCapture(xpaths, resolver, log, retry, events, live);
   }
