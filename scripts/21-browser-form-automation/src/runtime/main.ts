@@ -13,6 +13,7 @@ import { ConfigCsvExporter } from "../core/ConfigCsvExporter";
 import { RetryPolicy } from "../core/RetryPolicy";
 import { StepEventLog } from "../core/StepEventLog";
 import { JsonLogExporter } from "../core/JsonLogExporter";
+import { LiveCapture } from "../core/LiveCapture";
 import { XPathResolver } from "../xpath/resolver";
 import { XPathValidator } from "../core/XPathValidator";
 import { HotkeyController } from "../core/HotkeyController";
@@ -44,15 +45,16 @@ function bootstrap(): void {
   const delays = new DelayController(config.delays);
   const retry = new RetryPolicy(() => config.delays, logger);
   const events = new StepEventLog();
-  const runner = new StepRunner(() => config.xpaths, () => config.runtime, resolver, setter, delays, logger, retry, events);
+  const live = new LiveCapture();
+  const runner = new StepRunner(() => config.xpaths, () => config.runtime, resolver, setter, delays, logger, retry, events, live);
   const ledger = new CycleLedger();
   const csv = new CsvExporter();
   const configCsv = new ConfigCsvExporter();
   const jsonExporter = new JsonLogExporter();
-  const orchestrator = new SequenceOrchestrator(() => config, runner, logger, ledger, events);
+  const orchestrator = new SequenceOrchestrator(() => config, runner, logger, ledger, events, live);
   const validator = new XPathValidator(resolver);
 
-  new Panel({ config, store, profiles, fileIO, logger, orchestrator, delays, ledger, csv, configCsv, validator, events, jsonExporter }).mount();
+  new Panel({ config, store, profiles, fileIO, logger, orchestrator, delays, ledger, csv, configCsv, validator, events, jsonExporter, live }).mount();
   const host = document.getElementById("xp21-host");
   if (host) new HotkeyController(logger, orchestrator).attach(host);
   logger.info("boot", "Panel mounted (active profile: " + activeName + ")");
