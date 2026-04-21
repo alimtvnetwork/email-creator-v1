@@ -12,6 +12,8 @@ import { DelayController } from "../core/DelayController";
 import { CycleLedger, type CycleRecord } from "../core/CycleLedger";
 import { CsvExporter } from "../core/CsvExporter";
 import { XPathValidator } from "../core/XPathValidator";
+import { StepEventLog, type StepEvent } from "../core/StepEventLog";
+import { JsonLogExporter } from "../core/JsonLogExporter";
 import { PANEL_CSS } from "./styles";
 import { ToastHost } from "./ToastHost";
 import { el } from "./dom";
@@ -27,6 +29,8 @@ interface PanelDeps {
   ledger: CycleLedger;
   csv: CsvExporter;
   validator: XPathValidator;
+  events: StepEventLog;
+  jsonExporter: JsonLogExporter;
 }
 
 export class Panel {
