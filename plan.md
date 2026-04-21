@@ -23,9 +23,8 @@
 
 ### Open follow-ups (non-manual, in priority order)
 
-- Per-step retry with backoff before failing a cycle.
 - Dry-run mode — resolve + highlight elements, skip clicks/fills.
-- Loader bookmarklet to avoid the ~150 KB inline limit.
+- Loader bookmarklet to avoid the ~160 KB inline limit.
 
 ### Open follow-ups (manual, on hold)
 
