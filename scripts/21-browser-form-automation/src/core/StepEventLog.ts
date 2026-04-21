@@ -27,6 +27,8 @@ export interface StepEvent {
   status: StepStatus;
   attempts?: number;     // total attempts used (1 = first try)
   delayMs?: number;      // delay applied immediately after this step
+  source?: string;        // optional capture source, e.g. passwordFieldFallback
+  value?: string;         // optional captured value for debugging exports
   error?: string;
 }
 
