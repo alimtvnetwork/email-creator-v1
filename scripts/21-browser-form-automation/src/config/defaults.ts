@@ -12,11 +12,14 @@ export const DEFAULT_CONFIG: AutomationConfig = {
     padding: 3,
     domain: "gmail.com",
     rangeStart: 5,
-    rangeEnd: 10,
+    rangeEnd: 29,
+    count: 25,
   },
   xpaths: {
     emailField:
       "/html/body/div[2]/div[2]/div/div/div/div[2]/section[2]/div/div[1]/form/div/div[2]/div[2]/div[2]/div[1]/div/input",
+    passwordField:
+      "/html/body/div[2]/div[2]/div/div/div/div[2]/section[2]/div/div[1]/form/div/div[2]/div[5]/div/div[1]/span/span/input",
     passwordGenerate:
       "/html/body/div[2]/div[2]/div/div/div/div[2]/section[2]/div/div[1]/form/div/div[2]/div[5]/div/div[1]/span/span/span/button[2]",
     createButton:

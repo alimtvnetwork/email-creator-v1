@@ -6,6 +6,7 @@ export type CycleStatus = "success" | "failure";
 export interface CycleRecord {
   index: number;       // 1-based position in the run
   email: string;
+  password?: string;
   status: CycleStatus;
   timestamp: number;   // epoch ms
   error?: string;

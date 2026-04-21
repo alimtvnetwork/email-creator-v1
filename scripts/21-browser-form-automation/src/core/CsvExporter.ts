@@ -2,7 +2,7 @@
 // Strings are quoted only when needed so the file stays human-friendly.
 import type { CycleRecord } from "./CycleLedger";
 
-const HEADER = ["index", "email", "status", "timestamp_iso", "error"] as const;
+const HEADER = ["index", "email", "password", "status", "timestamp_iso", "error"] as const;
 
 export class CsvExporter {
   /** Trigger a browser download of the records as CSV. */
@@ -20,7 +20,9 @@ export class CsvExporter {
   serialize(records: ReadonlyArray<CycleRecord>): string {
     const lines = [HEADER.join(",")];
     for (const r of records) lines.push(this.toRow(r));
-    return lines.join("\n") + "\n";
+    return lines.join("
+") + "
+";
   }
 
   private toRow(r: CycleRecord): string {
@@ -28,6 +30,7 @@ export class CsvExporter {
     return [
       String(r.index),
       this.escape(r.email),
+      this.escape(r.password ?? ""),
       r.status,
       iso,
       this.escape(r.error ?? ""),
@@ -36,7 +39,8 @@ export class CsvExporter {
 
   /** RFC 4180 quoting: wrap in quotes only if the field needs it. */
   private escape(value: string): string {
-    if (!/[",\n\r]/.test(value)) return value;
+    if (!/[",
+]/.test(value)) return value;
     return '"' + value.replace(/"/g, '""') + '"';
   }
 }
