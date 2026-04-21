@@ -95,9 +95,16 @@ the whole batch.
 - Section *Runtime*: mode toggle (auto/manual), reactAware checkbox.
 - Controls: Start, Stop, Next (manual only), Reset.
 - Live log (max 200 lines, newest on top).
+- **Profiles section** (added in v0.2):
+  - Dropdown listing all named profiles, with the active one selected.
+  - Save (overwrite active), Save As… (prompt for new name), Delete, Defaults
+    (reset working copy to `DEFAULT_CONFIG`), Export (download JSON), Import
+    (file picker → merge into working copy).
+  - Toast feedback on each action (success/error/info).
 
-The panel persists config in `localStorage` under
-`xp21.config.v1` so reloading the page keeps the operator's setup.
+The panel persists working config in `localStorage` under `xp21.config.v1`.
+Named profiles live under `xp21.profiles.v1` (a single JSON object) and the
+active profile pointer under `xp21.activeProfile.v1`.
 
 ## 7. Code conventions
 

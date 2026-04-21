@@ -52,4 +52,23 @@ export const PANEL_CSS = `
   .log .warn { color: #fbbf24; }
   .log .error { color: #f87171; }
   .log .ts { color: #6b7280; margin-right: 6px; }
+
+  .profile-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: end; }
+  .profile-row select { height: 28px; }
+  .profile-actions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .profile-actions button { flex: 1 1 auto; min-width: 0; padding: 5px 6px; font-size: 11px; }
+
+  .toast-host {
+    position: absolute; bottom: 12px; left: 12px; right: 12px;
+    display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 10;
+  }
+  .toast {
+    padding: 7px 10px; border-radius: 4px; font-size: 11px; color: #f3f4f6;
+    background: #1f2937; border: 1px solid #374151;
+    box-shadow: 0 4px 12px rgba(0,0,0,.4);
+    opacity: 1; transform: translateY(0); transition: opacity .2s ease, transform .2s ease;
+  }
+  .toast.success { background: #065f46; border-color: #047857; }
+  .toast.error   { background: #7f1d1d; border-color: #991b1b; }
+  .toast.leaving { opacity: 0; transform: translateY(6px); }
 `;

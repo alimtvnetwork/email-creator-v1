@@ -16,6 +16,7 @@
 - [x] Floating Shadow-DOM panel with editable XPaths/delays/range, auto + manual modes, live log, draggable header
 - [x] `run.ps1` (git pull → npm install → build)
 - [x] Typecheck + bundle verified locally
+- [x] **v0.2** — Multi-profile localStorage manager, JSON import/export, explicit Save/Save As/Delete/Defaults buttons, in-panel toast feedback
 
 ### Open follow-ups
 
