@@ -58,6 +58,8 @@ export const PANEL_CSS = `
   .profile-actions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
   .profile-actions button { flex: 1 1 auto; min-width: 0; padding: 5px 6px; font-size: 11px; }
   .results-count { display: block; font-size: 11px; color: #93c5fd; font-family: ui-monospace, monospace; margin-bottom: 4px; }
+  .controls-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .progress { font-size: 11px; color: #93c5fd; font-family: ui-monospace, monospace; text-align: right; }
 
   .toast-host {
     position: absolute; bottom: 12px; left: 12px; right: 12px;

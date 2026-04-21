@@ -1,17 +1,28 @@
-// Drives the email queue in either auto-loop or manual-step mode.
-// Stop is cooperative: the running cycle finishes, then the loop exits.
+// Drives the email queue in auto-loop or manual-step mode.
+// State machine: idle → running ↔ pausing/paused, with a stopping shortcut.
+// All transitions out of "running" are cooperative — the in-flight cycle
+// finishes first, then the loop honors the requested next state.
 import type { AutomationConfig } from "../config/types";
 import { EmailSequenceGenerator } from "./EmailSequenceGenerator";
 import { StepRunner } from "./StepRunner";
 import { Logger } from "./Logger";
 import { CycleLedger } from "./CycleLedger";
 
-export type RunState = "idle" | "running" | "stopping";
+export type RunState = "idle" | "running" | "pausing" | "paused" | "stopping";
+
+export interface Progress {
+  cursor: number;
+  total: number;
+  state: RunState;
+}
+
+type ProgressListener = (p: Progress) => void;
 
 export class SequenceOrchestrator {
   private queue: string[] = [];
   private cursor = 0;
   private state: RunState = "idle";
+  private listeners = new Set<ProgressListener>();
 
   constructor(
     private readonly getConfig: () => AutomationConfig,
@@ -20,44 +31,93 @@ export class SequenceOrchestrator {
     private readonly ledger: CycleLedger,
   ) {}
 
-  /** Build the queue from current config and (in auto mode) start looping. */
+  /** Subscribe to progress changes; returns an unsubscribe function. */
+  subscribe(fn: ProgressListener): () => void {
+    this.listeners.add(fn);
+    fn(this.snapshot());
+    return () => this.listeners.delete(fn);
+  }
+
+  /** Current cursor / total / state snapshot. */
+  snapshot(): Progress {
+    return { cursor: this.cursor, total: this.queue.length, state: this.state };
+  }
+
+  /** Start a fresh run, or resume from paused if applicable. */
   async start(): Promise<void> {
+    if (this.state === "paused") return this.resume();
     if (this.state !== "idle") return;
-    this.queue = new EmailSequenceGenerator(this.getConfig().sequence).generate();
-    this.cursor = 0;
-    this.log.info("orchestrator", "Queue prepared: " + this.queue.length + " emails");
-    if (this.getConfig().runtime.mode === "auto") await this.runUntilDone();
+    this.prepareQueue();
+    if (this.getConfig().runtime.mode === "auto") await this.runUntilHalt();
   }
 
   /** Process exactly one email; only meaningful in manual mode. */
   async next(): Promise<void> {
     if (this.state === "running") return;
-    if (this.cursor >= this.queue.length) { this.log.info("orchestrator", "Queue empty"); return; }
-    this.state = "running";
+    if (this.queue.length === 0) this.prepareQueue();
+    if (this.cursor >= this.queue.length) {
+      this.log.info("orchestrator", "Queue empty");
+      this.transition("idle");
+      return;
+    }
+    this.transition("running");
     await this.runOne(this.queue[this.cursor]);
     this.cursor++;
-    this.state = "idle";
+    this.transition("idle");
+  }
+
+  /** Request a cooperative pause after the current cycle. */
+  pause(): void {
+    if (this.state === "running") { this.transition("pausing"); this.log.info("orchestrator", "Pause requested"); }
+  }
+
+  /** Resume an auto-mode loop from the current cursor. */
+  async resume(): Promise<void> {
+    if (this.state !== "paused") return;
+    this.log.info("orchestrator", "Resuming at index " + this.cursor);
+    if (this.getConfig().runtime.mode === "auto") await this.runUntilHalt();
+    else this.transition("idle");
   }
 
   /** Request a cooperative stop after the current cycle. */
   stop(): void {
-    if (this.state === "running") this.state = "stopping";
+    if (this.state === "running" || this.state === "pausing") {
+      this.transition("stopping");
+    }
   }
 
   /** Reset queue and cursor to a fresh idle state. */
   reset(): void {
-    this.queue = []; this.cursor = 0; this.state = "idle";
+    this.queue = []; this.cursor = 0;
+    this.transition("idle");
     this.log.info("orchestrator", "Reset");
   }
 
-  private async runUntilDone(): Promise<void> {
-    this.state = "running";
+  private prepareQueue(): void {
+    this.queue = new EmailSequenceGenerator(this.getConfig().sequence).generate();
+    this.cursor = 0;
+    this.log.info("orchestrator", "Queue prepared: " + this.queue.length + " emails");
+    this.emit();
+  }
+
+  private async runUntilHalt(): Promise<void> {
+    this.transition("running");
     while (this.cursor < this.queue.length && this.state === "running") {
       await this.runOne(this.queue[this.cursor]);
       this.cursor++;
+      this.emit();
     }
-    this.log.info("orchestrator", "Loop ended at index " + this.cursor);
-    this.state = "idle";
+    this.settleAfterLoop();
+  }
+
+  private settleAfterLoop(): void {
+    if (this.state === "pausing") {
+      this.transition("paused");
+      this.log.info("orchestrator", "Paused at index " + this.cursor);
+    } else {
+      this.transition("idle");
+      this.log.info("orchestrator", "Loop ended at index " + this.cursor);
+    }
   }
 
   private async runOne(email: string): Promise<void> {
@@ -73,5 +133,15 @@ export class SequenceOrchestrator {
       this.log.error("cycle", "Failed " + email + ": " + message);
       this.ledger.record({ email, status: "failure", error: message });
     }
+  }
+
+  private transition(next: RunState): void {
+    this.state = next;
+    this.emit();
+  }
+
+  private emit(): void {
+    const snap = this.snapshot();
+    this.listeners.forEach((fn) => fn(snap));
   }
 }

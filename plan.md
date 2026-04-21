@@ -19,13 +19,13 @@
 - [x] **v0.2** — Multi-profile localStorage manager, JSON import/export, explicit Save/Save As/Delete/Defaults buttons, in-panel toast feedback
 - [x] **v0.3** — Global hotkey `Ctrl+Shift+X` to toggle panel visibility (persisted in localStorage)
 - [x] **v0.4** — CycleLedger tracks every cycle (email/status/timestamp/error); Results section with live counts, Download CSV, and Clear buttons
+- [x] **v0.5** — Pause/Resume distinct from Stop (cursor preserved); progress indicator (`cursor / total · state`) live in controls row
 
 ### Open follow-ups (non-manual, in priority order)
 
-- Progress indicator (`current / total`) + true Pause distinct from Stop.
 - Per-step retry with backoff before failing a cycle.
 - Dry-run mode — resolve + highlight elements, skip clicks/fills.
-- Loader bookmarklet to avoid the ~140 KB inline limit.
+- Loader bookmarklet to avoid the ~150 KB inline limit.
 
 ### Open follow-ups (manual, on hold)
 
