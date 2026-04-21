@@ -1,17 +1,23 @@
 // Floating control panel rendered into a Shadow DOM. Reads/writes the live
-// AutomationConfig and exposes Start/Stop/Next/Reset buttons.
+// AutomationConfig and exposes Start/Stop/Next/Reset + profile management.
 import type { AutomationConfig, RunMode } from "../config/types";
 import { ConfigStore } from "../config/store";
+import { ProfileStore } from "../config/ProfileStore";
+import { ConfigFileIO } from "../config/ConfigFileIO";
+import { DEFAULT_CONFIG } from "../config/defaults";
 import { Logger, type LogLine } from "../core/Logger";
 import { SequenceOrchestrator } from "../core/SequenceOrchestrator";
 import { EmailSequenceGenerator } from "../core/EmailSequenceGenerator";
 import { DelayController } from "../core/DelayController";
 import { PANEL_CSS } from "./styles";
+import { ToastHost } from "./ToastHost";
 import { el } from "./dom";
 
 interface PanelDeps {
   config: AutomationConfig;
   store: ConfigStore;
+  profiles: ProfileStore;
+  fileIO: ConfigFileIO;
   logger: Logger;
   orchestrator: SequenceOrchestrator;
   delays: DelayController;
@@ -22,6 +28,8 @@ export class Panel {
   private logEl!: HTMLDivElement;
   private previewEl!: HTMLDivElement;
   private nextBtn!: HTMLButtonElement;
+  private profileSelect!: HTMLSelectElement;
+  private toast!: ToastHost;
 
   constructor(private readonly deps: PanelDeps) {}
 
@@ -32,6 +40,7 @@ export class Panel {
     this.root = host.attachShadow({ mode: "open" });
     this.root.appendChild(el("style", {}, [PANEL_CSS]));
     this.root.appendChild(this.buildRoot());
+    this.toast = new ToastHost(this.root);
     this.deps.logger.subscribe((line) => this.appendLog(line));
     this.deps.logger.snapshot().forEach((line) => this.appendLog(line));
     this.refreshPreview();
@@ -41,6 +50,7 @@ export class Panel {
     return el("div", { class: "root" }, [
       this.buildHeader(),
       el("div", { class: "body" }, [
+        this.buildProfileSection(),
         this.buildSequenceSection(),
         this.buildXPathSection(),
         this.buildDelaySection(),
