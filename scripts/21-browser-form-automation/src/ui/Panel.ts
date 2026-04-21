@@ -403,12 +403,7 @@ export class Panel {
     return el("label", {}, [label, input]);
   }
 
-  private areaField(label: string, value: string, onInput: (v: string) => void): HTMLElement {
-    const area = el("textarea", { rows: 2 }) as HTMLTextAreaElement;
-    area.value = value;
-    area.addEventListener("input", () => onInput(area.value));
-    return el("label", {}, [label, area]);
-  }
+  // areaField removed: XPath fields now use xpathField (with Validate button).
 
   private numberField(label: string, value: number, onInput: (n: number) => void): HTMLElement {
     const input = el("input", { type: "number", value: String(value) }) as HTMLInputElement;
