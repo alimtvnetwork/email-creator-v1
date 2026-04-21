@@ -33,7 +33,7 @@ export class ProfileStore {
   /** Load a named profile, falling back to defaults if missing. */
   load(name: string): AutomationConfig {
     const map = this.readMap();
-    return map[name] ? structuredClone(map[name]) : structuredClone(DEFAULT_CONFIG);
+    return this.merge(map[name] ? structuredClone(map[name]) : {});
   }
 
   /** Delete a named profile; the active pointer is cleared if it matched. */
@@ -59,6 +59,21 @@ export class ProfileStore {
 
   private writeMap(map: ProfileMap): void {
     this.safeWrite(PROFILES_KEY, JSON.stringify(map));
+  }
+
+  private merge(partial: Partial<AutomationConfig>): AutomationConfig {
+    const base = structuredClone(DEFAULT_CONFIG);
+    const sequence = { ...base.sequence, ...(partial.sequence ?? {}) };
+    if (!partial.sequence || partial.sequence.count === undefined) {
+      sequence.count = Math.max(1, sequence.rangeEnd - sequence.rangeStart + 1);
+    }
+    sequence.rangeEnd = sequence.rangeStart + sequence.count - 1;
+    return {
+      sequence,
+      xpaths:   { ...base.xpaths,   ...(partial.xpaths   ?? {}) },
+      delays:   { ...base.delays,   ...(partial.delays   ?? {}) },
+      runtime:  { ...base.runtime,  ...(partial.runtime  ?? {}) },
+    };
   }
 
   private requireName(name: string): string {

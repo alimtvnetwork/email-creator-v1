@@ -138,12 +138,11 @@ export class Panel {
       (v) => { s.pattern = v; this.afterEdit(); }));
     fs.appendChild(this.textField("Domain", s.domain,
       (v) => { s.domain = v; this.afterEdit(); }));
-    const grid = el("div", { class: "row-3" }, [
+    fs.appendChild(el("div", { class: "row-3" }, [
       this.numberField("Padding", s.padding, (n) => { s.padding = n; this.afterEdit(); }),
-      this.numberField("Start", s.rangeStart, (n) => { s.rangeStart = n; this.afterEdit(); }),
-      this.numberField("End", s.rangeEnd, (n) => { s.rangeEnd = n; this.afterEdit(); }),
-    ]);
-    fs.appendChild(grid);
+      this.numberField("Next number", s.rangeStart, (n) => { s.rangeStart = n; this.afterSequenceWindowEdit(); }),
+      this.numberField("How many emails", s.count, (n) => { s.count = n; this.afterSequenceWindowEdit(); }),
+    ]));
     this.previewEl = el("div", { class: "preview" });
     fs.appendChild(this.previewEl);
     fs.appendChild(this.buildSequenceExports());
@@ -194,6 +193,8 @@ export class Panel {
     const fields = [
       this.xpathField("Email field",              "emailField",       x.emailField,
         (v) => { x.emailField = v; this.persist(); }),
+      this.xpathField("Password field",           "passwordField",    x.passwordField,
+        (v) => { x.passwordField = v; this.persist(); }),
       this.xpathField("Password generate button", "passwordGenerate", x.passwordGenerate,
         (v) => { x.passwordGenerate = v; this.persist(); }),
       this.xpathField("Create button",            "createButton",     x.createButton,
@@ -426,16 +427,22 @@ export class Panel {
   private refreshProgress(p: { cursor: number; total: number; state: string }): void {
     if (!this.progressEl) return;
     this.progressEl.textContent = p.cursor + " / " + p.total + " · " + p.state;
-    if (this.startBtn) {
-      this.startBtn.textContent = p.state === "paused" ? "Resume" : "Start";
-      this.startBtn.disabled = p.state === "running" || p.state === "pausing";
-    }
-    if (this.pauseBtn) {
-      const canPause = p.state === "running";
-      const canResume = p.state === "paused";
-      this.pauseBtn.disabled = !(canPause || canResume);
-      this.pauseBtn.textContent = canResume ? "Resume" : "Pause";
-    }
+    this.refreshStartButton(p.state);
+    this.refreshPauseButton(p.state);
+    if (p.state === "idle") { this.persist(); this.refreshPreview(); }
+  }
+
+  private refreshStartButton(state: string): void {
+    if (!this.startBtn) return;
+    this.startBtn.textContent = state === "paused" ? "Resume" : "Start";
+    this.startBtn.disabled = state === "running" || state === "pausing";
+  }
+
+  private refreshPauseButton(state: string): void {
+    if (!this.pauseBtn) return;
+    const canResume = state === "paused";
+    this.pauseBtn.disabled = !(state === "running" || canResume);
+    this.pauseBtn.textContent = canResume ? "Resume" : "Pause";
   }
 
   private buildResultsSection(): HTMLElement {
@@ -534,6 +541,14 @@ export class Panel {
   private afterEdit(): void {
     this.persist();
     this.refreshPreview();
+  }
+
+  private afterSequenceWindowEdit(): void {
+    const seq = this.deps.config.sequence;
+    seq.count = Math.max(1, Math.floor(Number(seq.count) || 1));
+    seq.rangeStart = Math.floor(Number(seq.rangeStart) || 0);
+    seq.rangeEnd = seq.rangeStart + seq.count - 1;
+    this.afterEdit();
   }
 
   private refreshPreview(): void {
