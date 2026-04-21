@@ -195,6 +195,8 @@ export class Panel {
         (v) => { x.emailField = v; this.persist(); }),
       this.xpathField("Password field",           "passwordField",    x.passwordField,
         (v) => { x.passwordField = v; this.persist(); }),
+      this.xpathField("Password field (fallback)", "passwordFieldFallback", x.passwordFieldFallback || "",
+        (v) => { x.passwordFieldFallback = v; this.persist(); }),
       this.xpathField("Password generate button", "passwordGenerate", x.passwordGenerate,
         (v) => { x.passwordGenerate = v; this.persist(); }),
       this.xpathField("Create button",            "createButton",     x.createButton,

@@ -1,6 +1,6 @@
 {
   "name": "browser-form-automation-21",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "private": true,
   "description": "Injectable browser script that fills a 3-step form for a generated email sequence.",
   "scripts": {

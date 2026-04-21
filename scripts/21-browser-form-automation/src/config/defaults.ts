@@ -19,6 +19,8 @@ export const DEFAULT_CONFIG: AutomationConfig = {
     emailField:
       "/html/body/div[2]/div[2]/div/div/div/div[2]/section[2]/div/div[1]/form/div/div[2]/div[2]/div[2]/div[1]/div/input",
     passwordField:
+      "/html/body/div[2]/div[2]/div/div/div/div[2]/section[2]/div/div[1]/form/div/div[2]/div[5]/div/div[1]/span/span/input[2]",
+    passwordFieldFallback:
       "/html/body/div[2]/div[2]/div/div/div/div[2]/section[2]/div/div[1]/form/div/div[2]/div[5]/div/div[1]/span/span/input",
     passwordGenerate:
       "/html/body/div[2]/div[2]/div/div/div/div[2]/section[2]/div/div[1]/form/div/div[2]/div[5]/div/div[1]/span/span/span/button[2]",

@@ -54,16 +54,34 @@ export class StepRunner {
   }
 
   private async capturePassword(): Promise<string> {
-    const xpath = this.xpaths().passwordField;
-    const { el, attempts } = await this.resolveStep("capturePassword", "passwordField", xpath);
-    const password = await this.waitForNonEmptyValue(el, xpath);
-    if (!password) {
-      this.events.record({ step: "capturePassword", status: "missing", attempts, error: "empty after wait" });
-      throw new Error("Password element resolved but value stayed empty");
+    const primary = this.xpaths().passwordField;
+    const fallback = (this.xpaths().passwordFieldFallback || "").trim();
+    const primaryResult = await this.tryCaptureFrom("passwordField", primary);
+    if (primaryResult.value) return this.recordCaptured(primaryResult);
+    if (fallback && fallback !== primary) {
+      this.log.warn("step", "Primary password XPath empty — trying fallback");
+      const fallbackResult = await this.tryCaptureFrom("passwordFieldFallback", fallback);
+      if (fallbackResult.value) return this.recordCaptured(fallbackResult);
     }
-    this.events.record({ step: "capturePassword", status: "captured", attempts });
-    this.log.info("step", "Password captured (" + password.length + " chars)");
-    return password;
+    this.events.record({
+      step: "capturePassword", status: "missing",
+      attempts: primaryResult.attempts, error: "empty after wait (primary + fallback)",
+    });
+    throw new Error("Password element resolved but value stayed empty (primary + fallback)");
+  }
+
+  private async tryCaptureFrom(
+    name: string, xpath: string,
+  ): Promise<{ name: string; value: string; attempts: number }> {
+    const { el, attempts } = await this.resolveStep("capturePassword", name, xpath);
+    const value = await this.waitForNonEmptyValue(el, xpath);
+    return { name, value, attempts };
+  }
+
+  private recordCaptured(r: { name: string; value: string; attempts: number }): string {
+    this.events.record({ step: "capturePassword", status: "captured", attempts: r.attempts });
+    this.log.info("step", "Password captured via " + r.name + " (" + r.value.length + " chars)");
+    return r.value;
   }
 
   private async waitForNonEmptyValue(initial: Element, xpath: string): Promise<string> {
