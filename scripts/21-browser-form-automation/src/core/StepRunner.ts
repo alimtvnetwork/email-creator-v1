@@ -51,6 +51,35 @@ export class StepRunner {
     return this.capturePassword();
   }
 
+  private async capturePassword(): Promise<string> {
+    const xpath = this.xpaths().passwordField;
+    const { el, attempts } = await this.resolveStep("capturePassword", "passwordField", xpath);
+    const password = await this.waitForNonEmptyValue(el, xpath);
+    if (!password) {
+      this.events.record({ step: "capturePassword", status: "missing", attempts, error: "empty after wait" });
+      throw new Error("Password element resolved but value stayed empty");
+    }
+    this.events.record({ step: "capturePassword", status: "captured", attempts });
+    this.log.info("step", "Password captured (" + password.length + " chars)");
+    return password;
+  }
+
+  private async waitForNonEmptyValue(initial: Element, xpath: string): Promise<string> {
+    const deadline = Date.now() + PASSWORD_WAIT_MS;
+    let el: Element | null = initial;
+    while (Date.now() < deadline) {
+      const value = el ? this.readValue(el) : "";
+      if (value) return value;
+      await this.sleep(PASSWORD_POLL_MS);
+      el = this.resolver.resolve(xpath);
+    }
+    return "";
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => window.setTimeout(resolve, ms));
+  }
+
   /** Click the create button, then wait the randomized post-create delay. */
   async clickCreate(): Promise<void> {
     const { el, attempts } = await this.resolveStep("clickCreate", "createButton", this.xpaths().createButton);
