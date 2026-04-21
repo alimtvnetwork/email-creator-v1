@@ -28,6 +28,7 @@ export interface DelayConfig {
 export interface RuntimeConfig {
   mode: RunMode;
   reactAware: boolean;
+  dryRun: boolean;            // when true: resolve + highlight only, no clicks/fills
 }
 
 export interface AutomationConfig {
