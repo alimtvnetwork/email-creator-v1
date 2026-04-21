@@ -60,6 +60,11 @@ export const PANEL_CSS = `
   .results-count { display: block; font-size: 11px; color: #93c5fd; font-family: ui-monospace, monospace; margin-bottom: 4px; }
   .controls-wrap { display: flex; flex-direction: column; gap: 6px; }
   .progress { font-size: 11px; color: #93c5fd; font-family: ui-monospace, monospace; text-align: right; }
+  .xpath-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  button.btn.xpath-validate { flex: 0 0 auto; padding: 3px 8px; font-size: 11px; }
+  .xpath-status { font-family: ui-monospace, monospace; font-size: 11px; color: #6b7280; }
+  .xpath-status.ok   { color: #4ade80; }
+  .xpath-status.fail { color: #f87171; }
 
   .toast-host {
     position: absolute; bottom: 12px; left: 12px; right: 12px;
