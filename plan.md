@@ -27,6 +27,8 @@
 - [x] **v0.10** — XPath validator: each XPath field has a Validate button (plus Validate-all); resolves the XPath, scroll-into-view + green/red flash on the hit, inline status (`✓ <input> visible` / `✗ no match`)
 - [x] **v0.11** — Structured execution log: `StepEventLog` records every step (found/missing, attempts used, delay applied, error, cycleIndex, email, ISO timestamp); panel shows event counter under the live log with **Export log JSON** + **Clear events** buttons; bounded ring buffer (2000 entries)
 - [x] **v0.12** — Chrome MV3 extension wrapper (`extension/manifest.json`, click-to-inject background SW via `chrome.scripting.executeScript` in MAIN world, popup with Activate button + version stamp). `run.ps1 -D` deploy flag: reads `powershell.json`, resolves Chrome.exe + user-data-dir, kills bound Chrome processes (WMI command-line filter), relaunches with `--profile-directory --load-extension`. Modular ps-modules (`utils.ps1`, `browser-profiles.ps1`, `browser-deploy.ps1`) mirror macro-ahk-v21 layout. Build copies `bundle.js` → `extension/` and emits `version.json`.
+- [x] **v0.13** — Configurable hotkey remapping with conflict detection: Hotkeys section in panel lets operator override Space/Esc/Enter; persisted in localStorage; flags risky bindings (typing-prone keys, browser/system shortcuts) with ⚠ badge + tooltip reason.
+- [x] **v0.14** — Pre-run CSV exports (`ConfigCsvExporter`): three buttons in Sequence section — **Export emails CSV** (planned email list), **Export config CSV** (xpaths + delays + sequence + runtime as section/key/value rows), **Export combined CSV** (single file with both blocks). Distinct from existing post-run results CSV.
 
 ### Open follow-ups (non-manual)
 

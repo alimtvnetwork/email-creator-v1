@@ -89,7 +89,10 @@ the whole batch.
 
 - Header: title, drag handle, collapse, close.
 - Section *Sequence*: pattern, padding, domain, rangeStart, rangeEnd,
-  preview of first/last generated email.
+  preview of first/last generated email, plus pre-run CSV export buttons:
+  **Export emails CSV** (planned list), **Export config CSV** (xpaths +
+  delays + sequence + runtime snapshot), **Export combined CSV** (both
+  in one file). Distinct from the post-run results CSV in §Results.
 - Section *XPaths*: three textareas (emailField, passwordGenerate, createButton).
 - Section *Delays*: betweenStepsMs, postCreateMinMs, postCreateMaxMs.
 - Section *Runtime*: mode toggle (auto/manual), reactAware checkbox.
