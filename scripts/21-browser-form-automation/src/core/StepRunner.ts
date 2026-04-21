@@ -1,4 +1,4 @@
-// Encapsulates the three primitive operations: resolve, click, fill.
+// Encapsulates the primitive operations: resolve, click, fill, capture.
 // Element resolution is wrapped in RetryPolicy so transient DOM churn
 // (React renders, modals, etc.) doesn't kill an entire cycle.
 // In dry-run mode, elements are resolved and briefly highlighted, but
@@ -31,13 +31,8 @@ export class StepRunner {
   /** Click the email field, type the address, then wait the inter-step delay. */
   async fillEmail(email: string): Promise<void> {
     const { el, attempts } = await this.resolveStep("fillEmail", "emailField", this.xpaths().emailField);
-    if (this.isDryRun()) {
-      this.highlight(el, 'would fill email "' + email + '"');
-      const delayMs = await this.delays.betweenSteps();
-      this.events.record({ step: "fillEmail", status: "skipped-dryrun", attempts, delayMs });
-      return;
-    }
-    this.resolver.click(el, this.xpaths().emailField);
+    if (this.isDryRun()) return this.skipWithDelay(el, "fillEmail", attempts, 'would fill email "' + email + '"');
+    this.clickElement(el, this.xpaths().emailField);
     await this.delays.betweenSteps();
     this.setter.setValue(el, email);
     this.setter.blur(el);
@@ -46,18 +41,14 @@ export class StepRunner {
     this.events.record({ step: "fillEmail", status: "filled", attempts, delayMs });
   }
 
-  /** Click the password generate button, then wait the inter-step delay. */
-  async clickGeneratePassword(): Promise<void> {
+  /** Click the password generate button, then capture the generated password. */
+  async clickGeneratePassword(): Promise<string> {
     const { el, attempts } = await this.resolveStep("clickGeneratePassword", "passwordGenerate", this.xpaths().passwordGenerate);
-    if (this.isDryRun()) {
-      this.highlight(el, "would click passwordGenerate");
-      const delayMs = await this.delays.betweenSteps();
-      this.events.record({ step: "clickGeneratePassword", status: "skipped-dryrun", attempts, delayMs });
-      return;
-    }
-    this.resolver.click(el, this.xpaths().passwordGenerate);
+    if (this.isDryRun()) return this.skipWithDelay(el, "clickGeneratePassword", attempts, "would click passwordGenerate").then(() => "");
+    this.clickElement(el, this.xpaths().passwordGenerate);
     const delayMs = await this.delays.betweenSteps();
     this.events.record({ step: "clickGeneratePassword", status: "clicked", attempts, delayMs });
+    return this.capturePassword();
   }
 
   /** Click the create button, then wait the randomized post-create delay. */
@@ -69,9 +60,36 @@ export class StepRunner {
       this.events.record({ step: "clickCreate", status: "skipped-dryrun", attempts, delayMs });
       return;
     }
-    this.resolver.click(el, this.xpaths().createButton);
+    this.clickElement(el, this.xpaths().createButton);
     const delayMs = await this.delays.postCreate();
     this.events.record({ step: "clickCreate", status: "clicked", attempts, delayMs });
+  }
+
+  private async capturePassword(): Promise<string> {
+    try {
+      const { el, attempts } = await this.resolveStep("capturePassword", "passwordField", this.xpaths().passwordField);
+      const password = this.readValue(el);
+      this.events.record({ step: "capturePassword", status: "captured", attempts });
+      this.log.info("step", "Password captured (" + password.length + " chars)");
+      return password;
+    } catch (err) {
+      this.log.warn("step", "Password capture skipped: " + (err as Error).message);
+      return "";
+    }
+  }
+
+  private async skipWithDelay(el: Element, step: string, attempts: number, note: string): Promise<void> {
+    this.highlight(el, note);
+    const delayMs = await this.delays.betweenSteps();
+    this.events.record({ step, status: "skipped-dryrun", attempts, delayMs });
+  }
+
+  private clickElement(el: Element, xpath: string): void {
+    const html = el as HTMLElement;
+    if (html.scrollIntoView) html.scrollIntoView({ block: "center", inline: "center" });
+    if (typeof html.focus === "function") html.focus({ preventScroll: true });
+    this.resolver.click(el, xpath);
+    if (typeof html.click === "function") html.click();
   }
 
   private async resolveStep(
@@ -103,6 +121,11 @@ export class StepRunner {
       html.style.outline = prevOutline;
       html.style.boxShadow = prevShadow;
     }, HIGHLIGHT_MS);
+  }
+
+  private readValue(el: Element): string {
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) return el.value;
+    return (el.textContent || "").trim();
   }
 
   private requireEl(name: string, xpath: string): Element {

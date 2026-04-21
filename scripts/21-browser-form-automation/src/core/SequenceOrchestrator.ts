@@ -57,14 +57,11 @@ export class SequenceOrchestrator {
   async next(): Promise<void> {
     if (this.state === "running") return;
     if (this.queue.length === 0) this.prepareQueue();
-    if (this.cursor >= this.queue.length) {
-      this.log.info("orchestrator", "Queue empty");
-      this.transition("idle");
-      return;
-    }
+    if (this.cursor >= this.queue.length) return this.finishManualQueue();
     this.transition("running");
     await this.runOne(this.queue[this.cursor]);
     this.cursor++;
+    this.advanceRangeIfDone();
     this.transition("idle");
   }
 
@@ -88,14 +85,16 @@ export class SequenceOrchestrator {
     }
   }
 
-  /** Reset queue and cursor to a fresh idle state. */
+  /** Reset queue/cursor and rewind next email to the configured initial value. */
   reset(): void {
     this.queue = []; this.cursor = 0;
+    this.syncRangeEnd();
     this.transition("idle");
     this.log.info("orchestrator", "Reset");
   }
 
   private prepareQueue(): void {
+    this.syncRangeEnd();
     this.queue = new EmailSequenceGenerator(this.getConfig().sequence).generate();
     this.cursor = 0;
     this.log.info("orchestrator", "Queue prepared: " + this.queue.length + " emails");
@@ -117,6 +116,7 @@ export class SequenceOrchestrator {
       this.transition("paused");
       this.log.info("orchestrator", "Paused at index " + this.cursor);
     } else {
+      this.advanceRangeIfDone();
       this.transition("idle");
       this.log.info("orchestrator", "Loop ended at index " + this.cursor);
     }
@@ -129,10 +129,10 @@ export class SequenceOrchestrator {
     this.log.info("cycle", "Begin " + email);
     try {
       await this.runner.fillEmail(email);
-      await this.runner.clickGeneratePassword();
+      const password = await this.runner.clickGeneratePassword();
       await this.runner.clickCreate();
       this.log.info("cycle", "Done " + email);
-      this.ledger.record({ email, status: "success" });
+      this.ledger.record({ email, password, status: "success" });
       this.events.record({ step: "cycle", status: "cycle-success" });
     } catch (err) {
       const message = (err as Error).message;
@@ -142,6 +142,27 @@ export class SequenceOrchestrator {
     } finally {
       this.events.endCycle();
     }
+  }
+
+  private advanceRangeIfDone(): void {
+    if (this.cursor < this.queue.length) return;
+    const seq = this.getConfig().sequence;
+    seq.rangeStart = Math.floor(seq.rangeStart + this.queue.length);
+    this.syncRangeEnd();
+    this.queue = [];
+  }
+
+  private finishManualQueue(): void {
+    this.log.info("orchestrator", "Queue empty");
+    this.advanceRangeIfDone();
+    this.transition("idle");
+  }
+
+  private syncRangeEnd(): void {
+    const seq = this.getConfig().sequence;
+    seq.count = Math.max(1, Math.floor(Number(seq.count) || 1));
+    seq.rangeStart = Math.floor(Number(seq.rangeStart) || 0);
+    seq.rangeEnd = seq.rangeStart + seq.count - 1;
   }
 
   private transition(next: RunState): void {
