@@ -92,6 +92,7 @@ export class Panel {
         this.buildDelaySection(),
         this.buildRuntimeSection(),
         this.buildControls(),
+        this.buildLiveCapture(),
         this.buildResultsSection(),
         this.buildLog(),
       ]),
@@ -400,12 +401,14 @@ export class Panel {
       this.buildDelaySection(),
       this.buildRuntimeSection(),
       this.buildControls(),
+      this.buildLiveCapture(),
       this.buildResultsSection(),
       this.buildLog(),
     );
     this.deps.logger.snapshot().forEach((line) => this.appendLog(line));
     this.refreshResults(this.deps.ledger.snapshot());
     this.refreshEventCount(this.deps.events.snapshot());
+    this.refreshLiveCapture(this.deps.live.snapshot());
     this.refreshPreview();
   }
 
@@ -522,6 +525,24 @@ export class Panel {
   private refreshEventCount(events: ReadonlyArray<StepEvent>): void {
     if (!this.eventCountEl) return;
     this.eventCountEl.textContent = events.length + " step events";
+  }
+
+  private buildLiveCapture(): HTMLElement {
+    this.liveEmailEl    = el("span", { class: "live-val" }, ["—"]) as HTMLSpanElement;
+    this.livePasswordEl = el("span", { class: "live-val live-pw" }, ["—"]) as HTMLSpanElement;
+    this.liveSourceEl   = el("span", { class: "live-src" }, [""]) as HTMLSpanElement;
+    return el("fieldset", {}, [
+      el("legend", {}, ["Live capture (current cycle)"]),
+      el("div", { class: "live-row" }, [el("strong", {}, ["Email:"]),    this.liveEmailEl]),
+      el("div", { class: "live-row" }, [el("strong", {}, ["Password:"]), this.livePasswordEl, this.liveSourceEl]),
+    ]);
+  }
+
+  private refreshLiveCapture(s: LiveCaptureState): void {
+    if (!this.liveEmailEl) return;
+    this.liveEmailEl.textContent    = s.email    || "—";
+    this.livePasswordEl.textContent = s.password || "—";
+    this.liveSourceEl.textContent   = s.passwordSource ? " (via " + s.passwordSource + ")" : "";
   }
 
   private textField(label: string, value: string, onInput: (v: string) => void): HTMLElement {
