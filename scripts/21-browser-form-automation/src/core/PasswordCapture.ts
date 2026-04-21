@@ -43,28 +43,37 @@ export class PasswordCapture {
     return { values };
   }
 
-  async capture(before: PasswordBaseline): Promise<string> {
+  async capture(before: PasswordBaseline, regenerate?: () => Promise<void>): Promise<string> {
+    let baseline = before;
+    let totalAttempts = 0;
+    for (let i = 0; i <= GENERATE_MAX_RETRIES; i++) {
+      const result = await this.captureOnce(baseline, totalAttempts);
+      if (result.value) return result.value;
+      totalAttempts = result.attempts;
+      if (i === GENERATE_MAX_RETRIES || !regenerate) break;
+      this.log.warn("step", "No new password after wait — re-clicking Generate (retry " + (i + 1) + "/" + GENERATE_MAX_RETRIES + ")");
+      baseline = this.snapshotBeforeGenerate();
+      await regenerate();
+      await this.sleep(GENERATE_RETRY_WAIT_MS);
+    }
+    this.events.record({ step: "capturePassword", status: "missing", attempts: totalAttempts, error: "no changed generated password found after retries" });
+    throw new Error("No changed generated password found after Generate retries");
+  }
+
+  private async captureOnce(before: PasswordBaseline, prevAttempts: number): Promise<{ value: string; attempts: number }> {
     const primary = this.xpaths().passwordField;
     const fallback = (this.xpaths().passwordFieldFallback || "").trim();
     const primaryResult = await this.tryCaptureFrom("passwordField", primary, before);
-    if (primaryResult.value) return this.recordCaptured(primaryResult);
-    if (fallback && fallback !== primary) return this.captureFallback(fallback, before, primaryResult.attempts);
-    return this.captureByScan(before, primaryResult.attempts);
-  }
-
-  private async captureFallback(fallback: string, before: PasswordBaseline, attempts: number): Promise<string> {
-    this.log.warn("step", "Primary password XPath empty/stale — trying fallback");
-    const fallbackResult = await this.tryCaptureFrom("passwordFieldFallback", fallback, before);
-    if (fallbackResult.value) return this.recordCaptured(fallbackResult);
-    return this.captureByScan(before, attempts + fallbackResult.attempts);
-  }
-
-  private async captureByScan(before: PasswordBaseline, attempts: number): Promise<string> {
+    if (primaryResult.value) { this.recordCaptured(primaryResult); return { value: primaryResult.value, attempts: prevAttempts + primaryResult.attempts }; }
+    if (fallback && fallback !== primary) {
+      this.log.warn("step", "Primary password XPath empty/stale — trying fallback");
+      const fb = await this.tryCaptureFrom("passwordFieldFallback", fallback, before);
+      if (fb.value) { this.recordCaptured(fb); return { value: fb.value, attempts: prevAttempts + primaryResult.attempts + fb.attempts }; }
+    }
     this.log.warn("step", "Configured XPaths empty/stale — scanning nearby fields");
     const scanned = await this.scanForPassword(before);
-    if (scanned) return this.recordCaptured({ name: "heuristic-scan", value: scanned, attempts: 1 });
-    this.events.record({ step: "capturePassword", status: "missing", attempts, error: "no changed generated password found" });
-    throw new Error("No changed generated password found after Generate");
+    if (scanned) { this.recordCaptured({ name: "heuristic-scan", value: scanned, attempts: 1 }); return { value: scanned, attempts: prevAttempts + primaryResult.attempts + 1 }; }
+    return { value: "", attempts: prevAttempts + primaryResult.attempts };
   }
 
   private async tryCaptureFrom(name: string, xpath: string, before: PasswordBaseline): Promise<{ name: string; value: string; attempts: number }> {
