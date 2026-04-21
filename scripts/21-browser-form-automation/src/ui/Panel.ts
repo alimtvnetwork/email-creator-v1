@@ -11,6 +11,7 @@ import { EmailSequenceGenerator } from "../core/EmailSequenceGenerator";
 import { DelayController } from "../core/DelayController";
 import { CycleLedger, type CycleRecord } from "../core/CycleLedger";
 import { CsvExporter } from "../core/CsvExporter";
+import { ConfigCsvExporter } from "../core/ConfigCsvExporter";
 import { XPathValidator } from "../core/XPathValidator";
 import { StepEventLog, type StepEvent } from "../core/StepEventLog";
 import { JsonLogExporter } from "../core/JsonLogExporter";
@@ -28,6 +29,7 @@ interface PanelDeps {
   delays: DelayController;
   ledger: CycleLedger;
   csv: CsvExporter;
+  configCsv: ConfigCsvExporter;
   validator: XPathValidator;
   events: StepEventLog;
   jsonExporter: JsonLogExporter;
@@ -144,7 +146,46 @@ export class Panel {
     fs.appendChild(grid);
     this.previewEl = el("div", { class: "preview" });
     fs.appendChild(this.previewEl);
+    fs.appendChild(this.buildSequenceExports());
     return fs;
+  }
+
+  private buildSequenceExports(): HTMLElement {
+    const emails = this.actionButton("Export emails CSV", () => this.handleExportEmails());
+    const cfg    = this.actionButton("Export config CSV", () => this.handleExportConfig());
+    const both   = this.actionButton("Export combined CSV", () => this.handleExportCombined());
+    return el("div", { class: "profile-actions" }, [emails, cfg, both]);
+  }
+
+  private handleExportEmails(): void {
+    this.runConfigExport((cfg, name) =>
+      this.deps.configCsv.exportPlannedEmails(cfg, "xp21-emails-" + name + ".csv"),
+      (s) => "Exported " + s.rowCount + " emails");
+  }
+
+  private handleExportConfig(): void {
+    this.runConfigExport((cfg, name) =>
+      this.deps.configCsv.exportConfigSnapshot(cfg, "xp21-config-" + name + ".csv"),
+      (s) => "Exported config (" + s.rowCount + " rows)");
+  }
+
+  private handleExportCombined(): void {
+    this.runConfigExport((cfg, name) =>
+      this.deps.configCsv.exportCombined(cfg, "xp21-snapshot-" + name + ".csv"),
+      (s) => "Exported combined CSV (" + s.rowCount + " rows)");
+  }
+
+  private runConfigExport(
+    op: (cfg: AutomationConfig, stamp: string) => { filename: string; rowCount: number },
+    msg: (s: { filename: string; rowCount: number }) => string,
+  ): void {
+    try {
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const summary = op(this.deps.config, stamp);
+      this.toast.show(msg(summary), "success");
+    } catch (err) {
+      this.toast.show((err as Error).message, "error");
+    }
   }
 
   private buildXPathSection(): HTMLElement {
