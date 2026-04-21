@@ -20,9 +20,7 @@ export class CsvExporter {
   serialize(records: ReadonlyArray<CycleRecord>): string {
     const lines = [HEADER.join(",")];
     for (const r of records) lines.push(this.toRow(r));
-    return lines.join("
-") + "
-";
+    return lines.join("\n") + "\n";
   }
 
   private toRow(r: CycleRecord): string {
@@ -39,8 +37,7 @@ export class CsvExporter {
 
   /** RFC 4180 quoting: wrap in quotes only if the field needs it. */
   private escape(value: string): string {
-    if (!/[",
-]/.test(value)) return value;
+    if (!/[",\n\r]/.test(value)) return value;
     return '"' + value.replace(/"/g, '""') + '"';
   }
 }
