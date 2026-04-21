@@ -49,6 +49,9 @@ export class Panel {
     this.toast = new ToastHost(this.root);
     this.deps.logger.subscribe((line) => this.appendLog(line));
     this.deps.logger.snapshot().forEach((line) => this.appendLog(line));
+    this.unsubscribeLedger?.();
+    this.unsubscribeLedger = this.deps.ledger.subscribe((records) => this.refreshResults(records));
+    this.refreshResults(this.deps.ledger.snapshot());
     this.refreshPreview();
   }
 
@@ -253,9 +256,11 @@ export class Panel {
       this.buildDelaySection(),
       this.buildRuntimeSection(),
       this.buildControls(),
+      this.buildResultsSection(),
       this.buildLog(),
     );
     this.deps.logger.snapshot().forEach((line) => this.appendLog(line));
+    this.refreshResults(this.deps.ledger.snapshot());
     this.refreshPreview();
   }
 
@@ -270,6 +275,41 @@ export class Panel {
     this.nextBtn.addEventListener("click", () => void this.deps.orchestrator.next());
     reset.addEventListener("click", () => this.deps.orchestrator.reset());
     return el("div", { class: "controls" }, [start, stop, this.nextBtn, reset]);
+  }
+
+  private buildResultsSection(): HTMLElement {
+    this.resultsCountEl = el("span", { class: "results-count" }, ["0 cycles recorded"]);
+    const exportBtn = el("button", { class: "btn" }, ["Download CSV"]);
+    const clearBtn  = el("button", { class: "btn" }, ["Clear"]);
+    exportBtn.addEventListener("click", () => this.handleExportCsv());
+    clearBtn.addEventListener("click",  () => this.handleClearResults());
+    return el("fieldset", {}, [
+      el("legend", {}, ["Results"]),
+      this.resultsCountEl,
+      el("div", { class: "profile-actions" }, [exportBtn, clearBtn]),
+    ]);
+  }
+
+  private handleExportCsv(): void {
+    const records = this.deps.ledger.snapshot();
+    if (records.length === 0) { this.toast.show("No records to export", "info"); return; }
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    this.deps.csv.download(records, "xp21-results-" + stamp + ".csv");
+    this.toast.show("Exported " + records.length + " rows", "success");
+  }
+
+  private handleClearResults(): void {
+    if (!window.confirm("Clear recorded results?")) return;
+    this.deps.ledger.clear();
+    this.toast.show("Results cleared", "info");
+  }
+
+  private refreshResults(records: ReadonlyArray<CycleRecord>): void {
+    if (!this.resultsCountEl) return;
+    const ok = records.filter((r) => r.status === "success").length;
+    const fail = records.length - ok;
+    this.resultsCountEl.textContent =
+      records.length + " cycles · " + ok + " ok · " + fail + " failed";
   }
 
   private buildLog(): HTMLElement {
