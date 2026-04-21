@@ -46,7 +46,7 @@ function bootstrap(): void {
 
   new Panel({ config, store, profiles, fileIO, logger, orchestrator, delays, ledger, csv }).mount();
   const host = document.getElementById("xp21-host");
-  if (host) new HotkeyController(logger).attach(host);
+  if (host) new HotkeyController(logger, orchestrator).attach(host);
   logger.info("boot", "Panel mounted (active profile: " + activeName + ")");
 }
 
