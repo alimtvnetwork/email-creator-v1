@@ -20,12 +20,12 @@
 - [x] **v0.3** — Global hotkey `Ctrl+Shift+X` to toggle panel visibility (persisted in localStorage)
 - [x] **v0.4** — CycleLedger tracks every cycle (email/status/timestamp/error); Results section with live counts, Download CSV, and Clear buttons
 - [x] **v0.5** — Pause/Resume distinct from Stop (cursor preserved); progress indicator (`cursor / total · state`) live in controls row
+- [x] **v0.6** — Per-step retry with exponential backoff (`retryAttempts`, `retryBackoffMs`); element resolution wrapped in RetryPolicy
 
 ### Open follow-ups (non-manual, in priority order)
 
-- Per-step retry with backoff before failing a cycle.
 - Dry-run mode — resolve + highlight elements, skip clicks/fills.
-- Loader bookmarklet to avoid the ~150 KB inline limit.
+- Loader bookmarklet to avoid the ~160 KB inline limit.
 
 ### Open follow-ups (manual, on hold)
 
