@@ -21,6 +21,8 @@ export interface DelayConfig {
   betweenStepsMs: number;
   postCreateMinMs: number;
   postCreateMaxMs: number;
+  retryAttempts: number;     // total attempts incl. the first; 1 = no retry
+  retryBackoffMs: number;    // base backoff; doubled each subsequent attempt
 }
 
 export interface RuntimeConfig {

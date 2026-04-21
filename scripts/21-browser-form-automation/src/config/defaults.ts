@@ -26,6 +26,8 @@ export const DEFAULT_CONFIG: AutomationConfig = {
     betweenStepsMs: 200,
     postCreateMinMs: 500,
     postCreateMaxMs: 700,
+    retryAttempts: 3,
+    retryBackoffMs: 250,
   },
   runtime: {
     mode: "auto",
