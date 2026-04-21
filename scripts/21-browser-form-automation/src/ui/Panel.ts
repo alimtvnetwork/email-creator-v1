@@ -65,7 +65,10 @@ export class Panel {
     this.unsubscribeLedger = this.deps.ledger.subscribe((records) => this.refreshResults(records));
     this.unsubscribeProgress?.();
     this.unsubscribeProgress = this.deps.orchestrator.subscribe((p) => this.refreshProgress(p));
+    this.unsubscribeEvents?.();
+    this.unsubscribeEvents = this.deps.events.subscribe((evs) => this.refreshEventCount(evs));
     this.refreshResults(this.deps.ledger.snapshot());
+    this.refreshEventCount(this.deps.events.snapshot());
     this.refreshPreview();
   }
 
