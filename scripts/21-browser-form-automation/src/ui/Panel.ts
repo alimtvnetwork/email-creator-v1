@@ -128,7 +128,129 @@ export class Panel {
     return el("fieldset", {}, [el("legend", {}, ["Runtime"]), modeLabel]);
   }
 
-  private buildControls(): HTMLElement {
+  private buildProfileSection(): HTMLElement {
+    this.profileSelect = el("select", {}) as HTMLSelectElement;
+    this.populateProfileOptions();
+    this.profileSelect.addEventListener("change", () => this.handleProfileSwitch());
+    const row = el("div", { class: "profile-row" }, [
+      el("label", {}, ["Profile", this.profileSelect]),
+    ]);
+    return el("fieldset", {}, [
+      el("legend", {}, ["Profiles"]),
+      row,
+      this.buildProfileActions(),
+    ]);
+  }
+
+  private buildProfileActions(): HTMLElement {
+    const save    = this.actionButton("Save",    () => this.handleSaveCurrent());
+    const saveAs  = this.actionButton("Save As…", () => this.handleSaveAs());
+    const del     = this.actionButton("Delete",  () => this.handleDelete());
+    const reset   = this.actionButton("Defaults",() => this.handleResetDefaults());
+    const exp     = this.actionButton("Export",  () => this.handleExport());
+    const imp     = this.actionButton("Import",  () => void this.handleImport());
+    return el("div", { class: "profile-actions" }, [save, saveAs, del, reset, exp, imp]);
+  }
+
+  private actionButton(label: string, onClick: () => void): HTMLButtonElement {
+    const btn = el("button", { class: "btn" }, [label]) as HTMLButtonElement;
+    btn.addEventListener("click", onClick);
+    return btn;
+  }
+
+  private populateProfileOptions(): void {
+    this.profileSelect.replaceChildren();
+    const active = this.deps.profiles.active();
+    const names = this.deps.profiles.list();
+    if (!names.includes(active)) names.unshift(active);
+    for (const name of names) {
+      this.profileSelect.appendChild(this.option(name, name, active));
+    }
+  }
+
+  private handleProfileSwitch(): void {
+    const name = this.profileSelect.value;
+    const next = this.deps.profiles.load(name);
+    this.deps.profiles.setActive(name);
+    this.applyConfig(next);
+    this.toast.show('Loaded profile "' + name + '"', "info");
+  }
+
+  private handleSaveCurrent(): void {
+    const name = this.deps.profiles.active();
+    this.deps.profiles.save(name, this.deps.config);
+    this.toast.show('Saved "' + name + '"', "success");
+  }
+
+  private handleSaveAs(): void {
+    const name = window.prompt("Save profile as:", this.deps.profiles.active());
+    if (!name) return;
+    try {
+      this.deps.profiles.save(name.trim(), this.deps.config);
+      this.populateProfileOptions();
+      this.profileSelect.value = name.trim();
+      this.toast.show('Saved "' + name.trim() + '"', "success");
+    } catch (err) {
+      this.toast.show((err as Error).message, "error");
+    }
+  }
+
+  private handleDelete(): void {
+    const name = this.profileSelect.value;
+    if (!window.confirm('Delete profile "' + name + '"?')) return;
+    this.deps.profiles.delete(name);
+    this.populateProfileOptions();
+    this.toast.show('Deleted "' + name + '"', "info");
+  }
+
+  private handleResetDefaults(): void {
+    if (!window.confirm("Reset current settings to defaults?")) return;
+    this.applyConfig(structuredClone(DEFAULT_CONFIG));
+    this.toast.show("Reset to defaults", "info");
+  }
+
+  private handleExport(): void {
+    const name = this.deps.profiles.active() || "config";
+    this.deps.fileIO.exportToFile(this.deps.config, "xp21-" + name + ".json");
+    this.toast.show("Exported JSON", "success");
+  }
+
+  private async handleImport(): Promise<void> {
+    try {
+      const imported = await this.deps.fileIO.importFromFile();
+      this.applyConfig(imported);
+      this.toast.show("Imported JSON", "success");
+    } catch (err) {
+      this.toast.show((err as Error).message, "error");
+    }
+  }
+
+  /** Replace the live config in-place and re-render the body. */
+  private applyConfig(next: AutomationConfig): void {
+    Object.assign(this.deps.config.sequence, next.sequence);
+    Object.assign(this.deps.config.xpaths,   next.xpaths);
+    Object.assign(this.deps.config.delays,   next.delays);
+    Object.assign(this.deps.config.runtime,  next.runtime);
+    this.deps.delays.update(this.deps.config.delays);
+    this.persist();
+    this.rerenderBody();
+  }
+
+  private rerenderBody(): void {
+    const body = this.root.querySelector(".body");
+    if (!body) return;
+    body.replaceChildren(
+      this.buildProfileSection(),
+      this.buildSequenceSection(),
+      this.buildXPathSection(),
+      this.buildDelaySection(),
+      this.buildRuntimeSection(),
+      this.buildControls(),
+      this.buildLog(),
+    );
+    this.deps.logger.snapshot().forEach((line) => this.appendLog(line));
+    this.refreshPreview();
+  }
     const start = el("button", { class: "btn primary" }, ["Start"]);
     const stop  = el("button", { class: "btn danger" }, ["Stop"]);
     this.nextBtn = el("button", { class: "btn" }, ["Next"]) as HTMLButtonElement;
