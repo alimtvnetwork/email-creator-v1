@@ -9,6 +9,7 @@ import { StepRunner } from "../core/StepRunner";
 import { SequenceOrchestrator } from "../core/SequenceOrchestrator";
 import { CycleLedger } from "../core/CycleLedger";
 import { CsvExporter } from "../core/CsvExporter";
+import { ConfigCsvExporter } from "../core/ConfigCsvExporter";
 import { RetryPolicy } from "../core/RetryPolicy";
 import { StepEventLog } from "../core/StepEventLog";
 import { JsonLogExporter } from "../core/JsonLogExporter";
@@ -46,11 +47,12 @@ function bootstrap(): void {
   const runner = new StepRunner(() => config.xpaths, () => config.runtime, resolver, setter, delays, logger, retry, events);
   const ledger = new CycleLedger();
   const csv = new CsvExporter();
+  const configCsv = new ConfigCsvExporter();
   const jsonExporter = new JsonLogExporter();
   const orchestrator = new SequenceOrchestrator(() => config, runner, logger, ledger, events);
   const validator = new XPathValidator(resolver);
 
-  new Panel({ config, store, profiles, fileIO, logger, orchestrator, delays, ledger, csv, validator, events, jsonExporter }).mount();
+  new Panel({ config, store, profiles, fileIO, logger, orchestrator, delays, ledger, csv, configCsv, validator, events, jsonExporter }).mount();
   const host = document.getElementById("xp21-host");
   if (host) new HotkeyController(logger, orchestrator).attach(host);
   logger.info("boot", "Panel mounted (active profile: " + activeName + ")");
