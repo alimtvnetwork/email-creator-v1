@@ -323,6 +323,7 @@ export class Panel {
     );
     this.deps.logger.snapshot().forEach((line) => this.appendLog(line));
     this.refreshResults(this.deps.ledger.snapshot());
+    this.refreshEventCount(this.deps.events.snapshot());
     this.refreshPreview();
   }
 
