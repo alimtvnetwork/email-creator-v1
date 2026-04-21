@@ -11,6 +11,7 @@ import { EmailSequenceGenerator } from "../core/EmailSequenceGenerator";
 import { DelayController } from "../core/DelayController";
 import { CycleLedger, type CycleRecord } from "../core/CycleLedger";
 import { CsvExporter } from "../core/CsvExporter";
+import { XPathValidator } from "../core/XPathValidator";
 import { PANEL_CSS } from "./styles";
 import { ToastHost } from "./ToastHost";
 import { el } from "./dom";
@@ -25,6 +26,7 @@ interface PanelDeps {
   delays: DelayController;
   ledger: CycleLedger;
   csv: CsvExporter;
+  validator: XPathValidator;
 }
 
 export class Panel {
@@ -108,12 +110,49 @@ export class Panel {
 
   private buildXPathSection(): HTMLElement {
     const x = this.deps.config.xpaths;
+    const validateAll = el("button", { class: "btn" }, ["Validate all"]) as HTMLButtonElement;
+    const fields = [
+      this.xpathField("Email field",              "emailField",       x.emailField,
+        (v) => { x.emailField = v; this.persist(); }),
+      this.xpathField("Password generate button", "passwordGenerate", x.passwordGenerate,
+        (v) => { x.passwordGenerate = v; this.persist(); }),
+      this.xpathField("Create button",            "createButton",     x.createButton,
+        (v) => { x.createButton = v; this.persist(); }),
+    ];
+    validateAll.addEventListener("click", () => fields.forEach((f) => f.validate()));
     return el("fieldset", {}, [
       el("legend", {}, ["XPaths"]),
-      this.areaField("Email field", x.emailField, (v) => { x.emailField = v; this.persist(); }),
-      this.areaField("Password generate button", x.passwordGenerate, (v) => { x.passwordGenerate = v; this.persist(); }),
-      this.areaField("Create button", x.createButton, (v) => { x.createButton = v; this.persist(); }),
+      ...fields.map((f) => f.node),
+      el("div", { class: "profile-actions" }, [validateAll]),
     ]);
+  }
+
+  private xpathField(
+    label: string,
+    name: string,
+    value: string,
+    onInput: (v: string) => void,
+  ): { node: HTMLElement; validate: () => void } {
+    const area = el("textarea", { rows: 2 }) as HTMLTextAreaElement;
+    area.value = value;
+    area.addEventListener("input", () => { onInput(area.value); status.textContent = ""; status.className = "xpath-status"; });
+    const status = el("span", { class: "xpath-status" }) as HTMLSpanElement;
+    const btn = el("button", { class: "btn xpath-validate" }, ["Validate"]) as HTMLButtonElement;
+    const validate = () => this.runValidation(name, area.value, status);
+    btn.addEventListener("click", validate);
+    const node = el("label", {}, [
+      label,
+      area,
+      el("div", { class: "xpath-row" }, [btn, status]),
+    ]);
+    return { node, validate };
+  }
+
+  private runValidation(name: string, xpath: string, status: HTMLSpanElement): void {
+    const result = this.deps.validator.validate(xpath);
+    status.textContent = result.message;
+    status.className = "xpath-status " + (result.ok ? "ok" : "fail");
+    this.deps.logger.info("validate", name + ": " + result.message);
   }
 
   private buildDelaySection(): HTMLElement {
@@ -364,12 +403,7 @@ export class Panel {
     return el("label", {}, [label, input]);
   }
 
-  private areaField(label: string, value: string, onInput: (v: string) => void): HTMLElement {
-    const area = el("textarea", { rows: 2 }) as HTMLTextAreaElement;
-    area.value = value;
-    area.addEventListener("input", () => onInput(area.value));
-    return el("label", {}, [label, area]);
-  }
+  // areaField removed: XPath fields now use xpathField (with Validate button).
 
   private numberField(label: string, value: number, onInput: (n: number) => void): HTMLElement {
     const input = el("input", { type: "number", value: String(value) }) as HTMLInputElement;
