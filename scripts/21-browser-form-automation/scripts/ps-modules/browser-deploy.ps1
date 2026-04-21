@@ -35,8 +35,8 @@ function Stop-BrowserForUserDataDir {
   }
 
   Write-Warn "Closing $($matched.Count) $procName process(es)$(if($allFlagged){' (could not filter by user-data-dir)'} else {' bound to '+$UserDataDir})"
-  foreach ($pid in $matched) {
-    try { Stop-Process -Id $pid -Force -ErrorAction Stop } catch { Write-Warn "  pid $pid: $($_.Exception.Message)" }
+  foreach ($procId in $matched) {
+    try { Stop-Process -Id $procId -Force -ErrorAction Stop } catch { Write-Warn "  pid ${procId}: $($_.Exception.Message)" }
   }
   Start-Sleep -Milliseconds 600
 }
