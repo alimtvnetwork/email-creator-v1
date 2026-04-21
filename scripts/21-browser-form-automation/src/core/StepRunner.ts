@@ -17,6 +17,10 @@ const HIGHLIGHT_STYLE = "2px solid #f59e0b";
 const HIGHLIGHT_SHADOW = "0 0 0 3px rgba(245,158,11,.35)";
 const PASSWORD_WAIT_MS = 3000;
 const PASSWORD_POLL_MS = 100;
+const SCAN_WAIT_MS = 3000;
+const SCAN_POLL_MS = 150;
+const PASSWORD_MIN_LEN = 6;
+const PASSWORD_MAX_LEN = 128;
 
 export class StepRunner {
   constructor(
@@ -63,11 +67,16 @@ export class StepRunner {
       const fallbackResult = await this.tryCaptureFrom("passwordFieldFallback", fallback);
       if (fallbackResult.value) return this.recordCaptured(fallbackResult);
     }
+    this.log.warn("step", "Configured XPaths empty — scanning nearby fields");
+    const scanned = await this.scanForPassword();
+    if (scanned) {
+      return this.recordCaptured({ name: "heuristic-scan", value: scanned, attempts: 1 });
+    }
     this.events.record({
       step: "capturePassword", status: "missing",
-      attempts: primaryResult.attempts, error: "empty after wait (primary + fallback)",
+      attempts: primaryResult.attempts, error: "empty after wait (primary + fallback + scan)",
     });
-    throw new Error("Password element resolved but value stayed empty (primary + fallback)");
+    throw new Error("Password element resolved but value stayed empty (primary + fallback + scan)");
   }
 
   private async tryCaptureFrom(
