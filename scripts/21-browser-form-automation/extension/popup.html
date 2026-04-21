@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>XP21</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      width: 240px; margin: 0; padding: 12px 14px;
+      font: 12px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color: #e5e7eb; background: #0f172a;
+    }
+    h1 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #f3f4f6; }
+    p  { margin: 0 0 10px; color: #9ca3af; }
+    button {
+      width: 100%; padding: 8px 10px; border-radius: 5px; border: 1px solid #2563eb;
+      background: #2563eb; color: #f3f4f6; cursor: pointer; font: inherit;
+    }
+    button:hover { background: #1d4ed8; }
+    .meta { margin-top: 10px; font-size: 11px; color: #6b7280; font-family: ui-monospace, monospace; }
+    .status { margin-top: 8px; font-size: 11px; min-height: 14px; }
+    .status.ok   { color: #4ade80; }
+    .status.fail { color: #f87171; }
+  </style>
+</head>
+<body>
+  <h1>XP21 Form Automation</h1>
+  <p>Mount the floating panel on the current tab.</p>
+  <button id="inject">Activate panel on this tab</button>
+  <div class="status" id="status"></div>
+  <div class="meta" id="version">…</div>
+  <script src="popup.js"></script>
+</body>
+</html>

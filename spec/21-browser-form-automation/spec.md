@@ -121,11 +121,62 @@ active profile pointer under `xp21.activeProfile.v1`.
 
 1. `git pull --ff-only`
 2. `npm install --no-audit --no-fund` (idempotent)
-3. `node build.mjs` → writes `dist/bundle.js` and `dist/bookmarklet.txt`
-4. Prints absolute paths of both artifacts.
+3. `node build.mjs` → writes `dist/bundle.js`, `dist/bookmarklet.txt`,
+   `dist/loader.txt`, and refreshes `extension/bundle.js` + `extension/version.json`
+4. Prints absolute paths of all artifacts.
+
+### 8.1 Chrome extension wrapper
+
+`extension/` contains an MV3 wrapper around the same `bundle.js`:
+
+| File | Purpose |
+|------|---------|
+| `manifest.json` | MV3, `action` toolbar button, no auto content script |
+| `background.js` | Service worker; on `action.onClicked`, injects `bundle.js` into the active tab via `chrome.scripting.executeScript` (file: `bundle.js`, world `MAIN`) |
+| `popup.html` / `popup.js` | Optional popup with **Activate panel on this tab** + version stamp from `version.json` |
+| `bundle.js` | Copied from `dist/bundle.js` at build time |
+| `icon.png` | 128×128 toolbar icon |
+
+The panel never auto-injects: it appears only when the operator clicks the
+toolbar icon (or the popup button). One-time `Ctrl+Shift+X` toggle still
+works once mounted. The bundle's existing `__xp21Mounted` guard prevents
+double-mount when the icon is clicked twice.
+
+### 8.2 `-D` / `-Deploy` flag
+
+`run.ps1 -D` runs the normal build, then deploys the extension to a
+configured Chrome profile by:
+
+1. Reading `powershell.json` for browser exe path overrides, user-data-dir,
+   and target profile name (default `Default`).
+2. Resolving Chrome.exe (PATH lookup → standard install paths).
+3. Killing Chrome processes that are bound to the resolved user-data-dir
+   (so `--load-extension` can attach cleanly).
+4. Relaunching Chrome with
+   `--profile-directory=<name> --load-extension=<absolute extension path>`.
+
+Re-running `run.ps1 -D` reloads the extension (Chrome re-reads files on
+relaunch). `-D` implies a build unless `-S` (skip-build) is also passed.
+
+`powershell.json` (committed example, all keys optional):
+
+```jsonc
+{
+  "browser": "chrome",                       // "chrome" | "edge"
+  "profile": "Default",                      // Chrome profile directory name
+  "chromeExePath": "",                       // explicit override; "" = auto-detect
+  "edgeExePath": "",
+  "chromeUserDataDir": "",                   // "" = %LOCALAPPDATA%\Google\Chrome\User Data
+  "edgeUserDataDir": "",
+  "killBeforeLaunch": true,                  // close existing Chrome bound to that user-data dir
+  "extraChromeArgs": []                      // appended to the launch command
+}
+```
 
 ## 9. Out of scope
 
 - No network calls, telemetry, or remote config.
 - No CAPTCHA solving.
 - No persistence of generated emails — operator copies from log if needed.
+- No automated reload while Chrome stays open (the relaunch *is* the reload).
+

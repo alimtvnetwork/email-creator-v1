@@ -1,2 +1,4 @@
 node_modules/
 dist/
+extension/bundle.js
+extension/version.json
