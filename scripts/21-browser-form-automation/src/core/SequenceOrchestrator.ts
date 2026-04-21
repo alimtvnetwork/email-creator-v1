@@ -7,6 +7,7 @@ import { EmailSequenceGenerator } from "./EmailSequenceGenerator";
 import { StepRunner } from "./StepRunner";
 import { Logger } from "./Logger";
 import { CycleLedger } from "./CycleLedger";
+import { StepEventLog } from "./StepEventLog";
 
 export type RunState = "idle" | "running" | "pausing" | "paused" | "stopping";
 
@@ -29,6 +30,7 @@ export class SequenceOrchestrator {
     private readonly runner: StepRunner,
     private readonly log: Logger,
     private readonly ledger: CycleLedger,
+    private readonly events: StepEventLog,
   ) {}
 
   /** Subscribe to progress changes; returns an unsubscribe function. */
@@ -121,6 +123,9 @@ export class SequenceOrchestrator {
   }
 
   private async runOne(email: string): Promise<void> {
+    const cycleIndex = this.cursor + 1;
+    this.events.beginCycle(cycleIndex, email);
+    this.events.record({ step: "cycle", status: "cycle-start" });
     this.log.info("cycle", "Begin " + email);
     try {
       await this.runner.fillEmail(email);
@@ -128,10 +133,14 @@ export class SequenceOrchestrator {
       await this.runner.clickCreate();
       this.log.info("cycle", "Done " + email);
       this.ledger.record({ email, status: "success" });
+      this.events.record({ step: "cycle", status: "cycle-success" });
     } catch (err) {
       const message = (err as Error).message;
       this.log.error("cycle", "Failed " + email + ": " + message);
       this.ledger.record({ email, status: "failure", error: message });
+      this.events.record({ step: "cycle", status: "cycle-failure", error: message });
+    } finally {
+      this.events.endCycle();
     }
   }
 

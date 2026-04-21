@@ -12,6 +12,8 @@ import { DelayController } from "../core/DelayController";
 import { CycleLedger, type CycleRecord } from "../core/CycleLedger";
 import { CsvExporter } from "../core/CsvExporter";
 import { XPathValidator } from "../core/XPathValidator";
+import { StepEventLog, type StepEvent } from "../core/StepEventLog";
+import { JsonLogExporter } from "../core/JsonLogExporter";
 import { PANEL_CSS } from "./styles";
 import { ToastHost } from "./ToastHost";
 import { el } from "./dom";
@@ -27,6 +29,8 @@ interface PanelDeps {
   ledger: CycleLedger;
   csv: CsvExporter;
   validator: XPathValidator;
+  events: StepEventLog;
+  jsonExporter: JsonLogExporter;
 }
 
 export class Panel {
@@ -39,9 +43,11 @@ export class Panel {
   private profileSelect!: HTMLSelectElement;
   private resultsCountEl!: HTMLSpanElement;
   private progressEl!: HTMLSpanElement;
+  private eventCountEl!: HTMLSpanElement;
   private toast!: ToastHost;
   private unsubscribeLedger?: () => void;
   private unsubscribeProgress?: () => void;
+  private unsubscribeEvents?: () => void;
 
   constructor(private readonly deps: PanelDeps) {}
 
@@ -59,7 +65,10 @@ export class Panel {
     this.unsubscribeLedger = this.deps.ledger.subscribe((records) => this.refreshResults(records));
     this.unsubscribeProgress?.();
     this.unsubscribeProgress = this.deps.orchestrator.subscribe((p) => this.refreshProgress(p));
+    this.unsubscribeEvents?.();
+    this.unsubscribeEvents = this.deps.events.subscribe((evs) => this.refreshEventCount(evs));
     this.refreshResults(this.deps.ledger.snapshot());
+    this.refreshEventCount(this.deps.events.snapshot());
     this.refreshPreview();
   }
 
@@ -314,6 +323,7 @@ export class Panel {
     );
     this.deps.logger.snapshot().forEach((line) => this.appendLog(line));
     this.refreshResults(this.deps.ledger.snapshot());
+    this.refreshEventCount(this.deps.events.snapshot());
     this.refreshPreview();
   }
 
@@ -394,7 +404,36 @@ export class Panel {
 
   private buildLog(): HTMLElement {
     this.logEl = el("div", { class: "log" });
-    return this.logEl;
+    this.eventCountEl = el("span", { class: "results-count" }, ["0 step events"]) as HTMLSpanElement;
+    const exportBtn = el("button", { class: "btn" }, ["Export log JSON"]);
+    const clearBtn  = el("button", { class: "btn" }, ["Clear events"]);
+    exportBtn.addEventListener("click", () => this.handleExportEvents());
+    clearBtn.addEventListener("click",  () => this.handleClearEvents());
+    return el("fieldset", {}, [
+      el("legend", {}, ["Execution Log"]),
+      this.eventCountEl,
+      this.logEl,
+      el("div", { class: "profile-actions" }, [exportBtn, clearBtn]),
+    ]);
+  }
+
+  private handleExportEvents(): void {
+    const events = this.deps.events.snapshot();
+    if (events.length === 0) { this.toast.show("No events to export", "info"); return; }
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    this.deps.jsonExporter.download(events, "xp21-events-" + stamp + ".json");
+    this.toast.show("Exported " + events.length + " events", "success");
+  }
+
+  private handleClearEvents(): void {
+    if (!window.confirm("Clear structured event log?")) return;
+    this.deps.events.clear();
+    this.toast.show("Events cleared", "info");
+  }
+
+  private refreshEventCount(events: ReadonlyArray<StepEvent>): void {
+    if (!this.eventCountEl) return;
+    this.eventCountEl.textContent = events.length + " step events";
   }
 
   private textField(label: string, value: string, onInput: (v: string) => void): HTMLElement {

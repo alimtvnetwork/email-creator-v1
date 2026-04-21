@@ -3,12 +3,14 @@
 // (React renders, modals, etc.) doesn't kill an entire cycle.
 // In dry-run mode, elements are resolved and briefly highlighted, but
 // no click or value-set side effects are performed.
+// Each step pushes a structured record into StepEventLog for debugging.
 import type { RuntimeConfig, XPathConfig } from "../config/types";
 import { XPathResolver } from "../xpath/resolver";
 import { ReactInputSetter } from "./ReactInputSetter";
 import { DelayController } from "./DelayController";
 import { Logger } from "./Logger";
 import { RetryPolicy } from "./RetryPolicy";
+import { StepEventLog } from "./StepEventLog";
 
 const HIGHLIGHT_MS = 600;
 const HIGHLIGHT_STYLE = "2px solid #f59e0b";
@@ -23,14 +25,16 @@ export class StepRunner {
     private readonly delays: DelayController,
     private readonly log: Logger,
     private readonly retry: RetryPolicy,
+    private readonly events: StepEventLog,
   ) {}
 
   /** Click the email field, type the address, then wait the inter-step delay. */
   async fillEmail(email: string): Promise<void> {
-    const el = await this.resolveWithRetry("emailField", this.xpaths().emailField);
+    const { el, attempts } = await this.resolveStep("fillEmail", "emailField", this.xpaths().emailField);
     if (this.isDryRun()) {
       this.highlight(el, 'would fill email "' + email + '"');
-      await this.delays.betweenSteps();
+      const delayMs = await this.delays.betweenSteps();
+      this.events.record({ step: "fillEmail", status: "skipped-dryrun", attempts, delayMs });
       return;
     }
     this.resolver.click(el, this.xpaths().emailField);
@@ -38,31 +42,50 @@ export class StepRunner {
     this.setter.setValue(el, email);
     this.setter.blur(el);
     this.log.info("step", 'Email set to "' + email + '"');
-    await this.delays.betweenSteps();
+    const delayMs = await this.delays.betweenSteps();
+    this.events.record({ step: "fillEmail", status: "filled", attempts, delayMs });
   }
 
   /** Click the password generate button, then wait the inter-step delay. */
   async clickGeneratePassword(): Promise<void> {
-    const el = await this.resolveWithRetry("passwordGenerate", this.xpaths().passwordGenerate);
+    const { el, attempts } = await this.resolveStep("clickGeneratePassword", "passwordGenerate", this.xpaths().passwordGenerate);
     if (this.isDryRun()) {
       this.highlight(el, "would click passwordGenerate");
-      await this.delays.betweenSteps();
+      const delayMs = await this.delays.betweenSteps();
+      this.events.record({ step: "clickGeneratePassword", status: "skipped-dryrun", attempts, delayMs });
       return;
     }
     this.resolver.click(el, this.xpaths().passwordGenerate);
-    await this.delays.betweenSteps();
+    const delayMs = await this.delays.betweenSteps();
+    this.events.record({ step: "clickGeneratePassword", status: "clicked", attempts, delayMs });
   }
 
   /** Click the create button, then wait the randomized post-create delay. */
   async clickCreate(): Promise<void> {
-    const el = await this.resolveWithRetry("createButton", this.xpaths().createButton);
+    const { el, attempts } = await this.resolveStep("clickCreate", "createButton", this.xpaths().createButton);
     if (this.isDryRun()) {
       this.highlight(el, "would click createButton");
-      await this.delays.postCreate();
+      const delayMs = await this.delays.postCreate();
+      this.events.record({ step: "clickCreate", status: "skipped-dryrun", attempts, delayMs });
       return;
     }
     this.resolver.click(el, this.xpaths().createButton);
-    await this.delays.postCreate();
+    const delayMs = await this.delays.postCreate();
+    this.events.record({ step: "clickCreate", status: "clicked", attempts, delayMs });
+  }
+
+  private async resolveStep(
+    step: string, name: string, xpath: string,
+  ): Promise<{ el: Element; attempts: number }> {
+    try {
+      const outcome = await this.retry.run("resolve " + name, () => this.requireEl(name, xpath));
+      this.events.record({ step, status: "found", attempts: outcome.attempts });
+      return { el: outcome.value, attempts: outcome.attempts };
+    } catch (err) {
+      const message = (err as Error).message;
+      this.events.record({ step, status: "missing", error: message });
+      throw err;
+    }
   }
 
   private isDryRun(): boolean {
@@ -80,10 +103,6 @@ export class StepRunner {
       html.style.outline = prevOutline;
       html.style.boxShadow = prevShadow;
     }, HIGHLIGHT_MS);
-  }
-
-  private resolveWithRetry(name: string, xpath: string): Promise<Element> {
-    return this.retry.run("resolve " + name, () => this.requireEl(name, xpath));
   }
 
   private requireEl(name: string, xpath: string): Element {
