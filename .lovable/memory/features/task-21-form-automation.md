@@ -20,3 +20,7 @@ Hotkeys remappable (v0.13) with conflict warnings (typing-prone / browser-shortc
 Extension wrapper requires `extension/icon.png` to be a true PNG file; Chrome can reject/list nothing when the icon extension and actual encoding mismatch.
 
 Versioning: bump both `package.json` and `extension/manifest.json` on each milestone. Current: v0.15.0.
+
+## v0.16 reliability update
+- Password capture uses `xpaths.passwordField` after generate-password click.
+- Create click scrolls element into view, focuses it, dispatches vendor React click events, then calls native `HTMLElement.click()` as a fallback.

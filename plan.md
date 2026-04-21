@@ -30,6 +30,7 @@
 - [x] **v0.13** — Configurable hotkey remapping with conflict detection: Hotkeys section in panel lets operator override Space/Esc/Enter; persisted in localStorage; flags risky bindings (typing-prone keys, browser/system shortcuts) with ⚠ badge + tooltip reason.
 - [x] **v0.14** — Pre-run CSV exports (`ConfigCsvExporter`): three buttons in Sequence section — **Export emails CSV** (planned email list), **Export config CSV** (xpaths + delays + sequence + runtime as section/key/value rows), **Export combined CSV** (single file with both blocks). Distinct from existing post-run results CSV.
 - [x] **v0.15** — Extension load reliability fix: replaced invalid JPEG-encoded `extension/icon.png` with a real PNG icon so Chrome can load/list XP21 from `--load-extension`.
+- [x] **v0.16** — Batch continuation and richer results: added **How many emails** control, auto-advances next number after each completed batch to avoid repeats, captures generated password into results CSV, and strengthens Create click via scroll/focus + React events + native click fallback.
 
 ### Open follow-ups (non-manual)
 

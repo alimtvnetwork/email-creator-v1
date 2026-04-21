@@ -32,11 +32,13 @@ expose a small floating UI so a non-developer operator can:
     "pattern": "loveable.engineer.v$$$", // $$$ is a literal placeholder marker
     "padding": 3,                         // zero-pad width, independent of $$$ count
     "domain": "gmail.com",                // appended as @<domain>
-    "rangeStart": 5,
-    "rangeEnd": 10
+    "rangeStart": 5,                 // next numeric value to run
+    "rangeEnd": 29,                  // derived: rangeStart + count - 1
+    "count": 25                      // how many emails to run this batch
   },
   "xpaths": {
     "emailField":      "/html/body/div[2]/.../input",
+    "passwordField":   "/html/body/div[2]/.../input",
     "passwordGenerate":"/html/body/div[2]/.../button[2]",
     "createButton":    "/html/body/div[2]/.../button[1]"
   },
@@ -55,7 +57,7 @@ expose a small floating UI so a non-developer operator can:
 The placeholder marker `$$$` is **literal** — its presence in the
 pattern is required, but the number of `$` characters does **not**
 control padding; padding comes from `sequence.padding`. Example:
-pattern `loveable.engineer.v$$$`, padding `3`, range `5..10`, domain
+pattern `loveable.engineer.v$$$`, padding `3`, next number `5`, count `6`, domain
 `gmail.com` →
 
 ```
@@ -68,10 +70,13 @@ loveable.engineer.v010@gmail.com
 ## 4. Run modes
 
 - **auto**: orchestrator iterates the full sequence; for each email it
-  fills, clicks generate, clicks create, then sleeps a jittered
-  `[postCreateMinMs, postCreateMaxMs]` before advancing.
+  fills, clicks generate, captures the password field, clicks create, then
+  sleeps a jittered `[postCreateMinMs, postCreateMaxMs]` before advancing.
 - **manual**: orchestrator processes exactly one email per Next click;
   Start primes the queue, Next advances by one full cycle.
+- After a prepared batch finishes, `rangeStart` advances by the number of
+  attempted emails and `rangeEnd` is recalculated, so the next run does not
+  repeat the same addresses.
 
 ## 5. Steps per cycle
 
@@ -79,7 +84,9 @@ loveable.engineer.v010@gmail.com
 2. Set the input value via the native setter; dispatch `input`, `change`,
    `blur`. Wait `betweenStepsMs`.
 3. Resolve `passwordGenerate`, click, wait `betweenStepsMs`.
-4. Resolve `createButton`, click, wait jitter `[postCreateMinMs, postCreateMaxMs]`.
+4. Resolve `passwordField`, read its generated value for CSV results.
+5. Resolve `createButton`, scroll/focus/click via React events and native
+   `HTMLElement.click()`, then wait jitter `[postCreateMinMs, postCreateMaxMs]`.
 
 Any missing element aborts the current cycle, logs a warning, and (in
 auto mode) continues with the next email so a flaky page does not stop
@@ -88,12 +95,13 @@ the whole batch.
 ## 6. UI surface (floating panel, Shadow DOM)
 
 - Header: title, drag handle, collapse, close.
-- Section *Sequence*: pattern, padding, domain, rangeStart, rangeEnd,
-  preview of first/last generated email, plus pre-run CSV export buttons:
+- Section *Sequence*: pattern, padding, domain, next number (`rangeStart`),
+  how many emails (`count`), derived range end, preview of first/last generated email,
+  plus pre-run CSV export buttons:
   **Export emails CSV** (planned list), **Export config CSV** (xpaths +
   delays + sequence + runtime snapshot), **Export combined CSV** (both
   in one file). Distinct from the post-run results CSV in §Results.
-- Section *XPaths*: three textareas (emailField, passwordGenerate, createButton).
+- Section *XPaths*: four textareas (emailField, passwordField, passwordGenerate, createButton).
 - Section *Delays*: betweenStepsMs, postCreateMinMs, postCreateMaxMs.
 - Section *Runtime*: mode toggle (auto/manual), reactAware checkbox.
 - Controls: Start, Stop, Next (manual only), Reset.
@@ -180,6 +188,14 @@ relaunch). `-D` implies a build unless `-S` (skip-build) is also passed.
 
 - No network calls, telemetry, or remote config.
 - No CAPTCHA solving.
-- No persistence of generated emails — operator copies from log if needed.
+- No persistence of generated emails outside local browser state and exported CSV.
 - No automated reload while Chrome stays open (the relaunch *is* the reload).
+
+## 10. v0.16 behavior update
+
+- Added **How many emails** batch size control.
+- Completed batches advance the next number to prevent repeated email addresses across runs.
+- Results CSV includes a `password` column populated from `xpaths.passwordField`.
+- Create button click now scrolls/focuses first, dispatches React click events,
+  and follows with native `HTMLElement.click()` for stubborn buttons.
 
