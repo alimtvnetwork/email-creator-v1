@@ -15,6 +15,7 @@ export interface SequenceConfig {
 export interface XPathConfig {
   emailField: string;
   passwordField: string;
+  passwordFieldFallback: string;  // optional alt XPath tried if primary is empty
   passwordGenerate: string;
   createButton: string;
 }
