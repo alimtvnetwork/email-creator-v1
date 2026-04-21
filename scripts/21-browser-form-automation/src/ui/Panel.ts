@@ -145,7 +145,11 @@ export class Panel {
       this.persist();
     });
     const modeLabel = el("label", {}, ["Run mode", select]);
-    return el("fieldset", {}, [el("legend", {}, ["Runtime"]), modeLabel]);
+    const dryInput = el("input", { type: "checkbox" }) as HTMLInputElement;
+    dryInput.checked = !!r.dryRun;
+    dryInput.addEventListener("change", () => { r.dryRun = dryInput.checked; this.persist(); });
+    const dryLabel = el("label", { class: "checkbox-row" }, [dryInput, "Dry-run (resolve + highlight only)"]);
+    return el("fieldset", {}, [el("legend", {}, ["Runtime"]), modeLabel, dryLabel]);
   }
 
   private buildProfileSection(): HTMLElement {

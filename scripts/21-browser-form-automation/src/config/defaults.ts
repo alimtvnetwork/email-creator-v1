@@ -32,5 +32,6 @@ export const DEFAULT_CONFIG: AutomationConfig = {
   runtime: {
     mode: "auto",
     reactAware: true,
+    dryRun: false,
   },
 };
