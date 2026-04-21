@@ -13,7 +13,13 @@ to tweak XPaths, delays, and the sequence pattern at runtime.
 Produces:
 
 - `dist/bundle.js` — paste into DevTools console
-- `dist/bookmarklet.txt` — drag the contents to your bookmark bar
+- `dist/bookmarklet.txt` — inline bookmarklet (works only while the bundle
+  stays under the browser's URL limit, typically ~160 KB after encoding)
+- `dist/loader.txt` — **recommended**: tiny loader bookmarklet (~500 bytes)
+  that fetches `bundle.js` from a hosted URL. Edit `BUNDLE_URL_PLACEHOLDER`
+  in `build.mjs` (or hand-edit `loader.txt`) to point at your hosted copy
+  (GitHub raw, GitHub Pages, local static server, etc.), then drag the
+  contents of `loader.txt` to your bookmark bar.
 
 ## Configuration
 

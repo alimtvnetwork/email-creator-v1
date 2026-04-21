@@ -22,10 +22,11 @@
 - [x] **v0.5** — Pause/Resume distinct from Stop (cursor preserved); progress indicator (`cursor / total · state`) live in controls row
 - [x] **v0.6** — Per-step retry with exponential backoff (`retryAttempts`, `retryBackoffMs`); element resolution wrapped in RetryPolicy
 - [x] **v0.7** — Dry-run mode: `runtime.dryRun` flag resolves + highlights target elements (amber outline, 600 ms) without issuing clicks or value-sets; toggle in Runtime section
+- [x] **v0.8** — Loader bookmarklet (`dist/loader.txt`, ~500 bytes) that fetches `bundle.js` from a hosted URL, bypassing the inline bookmarklet size limit; inline `bookmarklet.txt` retained for small-bundle fallback
 
-### Open follow-ups (non-manual, in priority order)
+### Open follow-ups (non-manual)
 
-- Loader bookmarklet to avoid the ~160 KB inline limit.
+- _(none — all non-manual tasks complete)_
 
 ### Open follow-ups (manual, on hold)
 
