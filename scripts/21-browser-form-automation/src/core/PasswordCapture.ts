@@ -72,7 +72,7 @@ export class PasswordCapture {
   }
 
   private recordCaptured(r: { name: string; value: string; attempts: number }): string {
-    this.events.record({ step: "capturePassword", status: "captured", attempts: r.attempts });
+    this.events.record({ step: "capturePassword", status: "captured", attempts: r.attempts, source: r.name, value: r.value });
     this.log.info("step", "Password captured via " + r.name + " (" + r.value.length + " chars)");
     this.live.setPassword(r.value, r.name);
     return r.value;
