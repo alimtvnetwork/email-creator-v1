@@ -7,6 +7,8 @@ import { DelayController } from "../core/DelayController";
 import { ReactInputSetter } from "../core/ReactInputSetter";
 import { StepRunner } from "../core/StepRunner";
 import { SequenceOrchestrator } from "../core/SequenceOrchestrator";
+import { CycleLedger } from "../core/CycleLedger";
+import { CsvExporter } from "../core/CsvExporter";
 import { XPathResolver } from "../xpath/resolver";
 import { HotkeyController } from "../core/HotkeyController";
 import { Panel } from "../ui/Panel";
@@ -36,9 +38,11 @@ function bootstrap(): void {
   const setter = new ReactInputSetter();
   const delays = new DelayController(config.delays);
   const runner = new StepRunner(() => config.xpaths, resolver, setter, delays, logger);
-  const orchestrator = new SequenceOrchestrator(() => config, runner, logger);
+  const ledger = new CycleLedger();
+  const csv = new CsvExporter();
+  const orchestrator = new SequenceOrchestrator(() => config, runner, logger, ledger);
 
-  new Panel({ config, store, profiles, fileIO, logger, orchestrator, delays }).mount();
+  new Panel({ config, store, profiles, fileIO, logger, orchestrator, delays, ledger, csv }).mount();
   const host = document.getElementById("xp21-host");
   if (host) new HotkeyController(logger).attach(host);
   logger.info("boot", "Panel mounted (active profile: " + activeName + ")");

@@ -4,6 +4,7 @@ import type { AutomationConfig } from "../config/types";
 import { EmailSequenceGenerator } from "./EmailSequenceGenerator";
 import { StepRunner } from "./StepRunner";
 import { Logger } from "./Logger";
+import { CycleLedger } from "./CycleLedger";
 
 export type RunState = "idle" | "running" | "stopping";
 
@@ -16,6 +17,7 @@ export class SequenceOrchestrator {
     private readonly getConfig: () => AutomationConfig,
     private readonly runner: StepRunner,
     private readonly log: Logger,
+    private readonly ledger: CycleLedger,
   ) {}
 
   /** Build the queue from current config and (in auto mode) start looping. */
@@ -65,8 +67,11 @@ export class SequenceOrchestrator {
       await this.runner.clickGeneratePassword();
       await this.runner.clickCreate();
       this.log.info("cycle", "Done " + email);
+      this.ledger.record({ email, status: "success" });
     } catch (err) {
-      this.log.error("cycle", "Failed " + email + ": " + (err as Error).message);
+      const message = (err as Error).message;
+      this.log.error("cycle", "Failed " + email + ": " + message);
+      this.ledger.record({ email, status: "failure", error: message });
     }
   }
 }

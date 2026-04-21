@@ -18,14 +18,14 @@
 - [x] Typecheck + bundle verified locally
 - [x] **v0.2** — Multi-profile localStorage manager, JSON import/export, explicit Save/Save As/Delete/Defaults buttons, in-panel toast feedback
 - [x] **v0.3** — Global hotkey `Ctrl+Shift+X` to toggle panel visibility (persisted in localStorage)
+- [x] **v0.4** — CycleLedger tracks every cycle (email/status/timestamp/error); Results section with live counts, Download CSV, and Clear buttons
 
 ### Open follow-ups (non-manual, in priority order)
 
-- CSV export of generated emails (index + timestamp) — button in Sequence section.
 - Progress indicator (`current / total`) + true Pause distinct from Stop.
 - Per-step retry with backoff before failing a cycle.
 - Dry-run mode — resolve + highlight elements, skip clicks/fills.
-- Loader bookmarklet to avoid the ~128 KB inline limit.
+- Loader bookmarklet to avoid the ~140 KB inline limit.
 
 ### Open follow-ups (manual, on hold)
 
