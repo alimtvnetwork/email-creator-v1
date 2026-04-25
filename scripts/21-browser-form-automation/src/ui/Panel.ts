@@ -546,6 +546,76 @@ export class Panel {
     ]);
   }
 
+  private buildStepStatusSection(): HTMLElement {
+    this.stepStatusEl = el("div", { class: "step-status" }, [
+      el("div", { class: "step-empty" }, ["No steps yet — start a run to see live status."]),
+    ]) as HTMLDivElement;
+    return el("fieldset", {}, [
+      el("legend", {}, ["Step status (most recent)"]),
+      this.stepStatusEl,
+    ]);
+  }
+
+  private refreshStepStatus(events: ReadonlyArray<StepEvent>): void {
+    if (!this.stepStatusEl) return;
+    const recent = events.slice(-5).reverse();
+    if (recent.length === 0) {
+      this.stepStatusEl.replaceChildren(
+        el("div", { class: "step-empty" }, ["No steps yet — start a run to see live status."]),
+      );
+      return;
+    }
+    this.stepStatusEl.replaceChildren(...recent.map((ev) => this.renderStepRow(ev)));
+  }
+
+  private renderStepRow(ev: StepEvent): HTMLElement {
+    const time = new Date(ev.timestamp).toLocaleTimeString(undefined, { hour12: false }) +
+      "." + String(ev.timestamp % 1000).padStart(3, "0");
+    const cls = "step-row step-" + this.statusClass(ev.status);
+    const stepLabel = this.stepLabel(ev.step);
+    const detail = ev.error ? " · " + ev.error
+      : ev.value ? " · " + (ev.value.length > 32 ? ev.value.slice(0, 32) + "…" : ev.value)
+      : ev.attempts && ev.attempts > 1 ? " · " + ev.attempts + " attempts"
+      : "";
+    return el("div", { class: cls }, [
+      el("span", { class: "step-icon" }, [this.statusIcon(ev.status)]),
+      el("span", { class: "step-time" }, [time]),
+      el("span", { class: "step-name" }, [stepLabel]),
+      el("span", { class: "step-status-text" }, [ev.status + detail]),
+    ]);
+  }
+
+  private statusClass(status: string): string {
+    if (status === "missing" || status === "cycle-failure") return "fail";
+    if (status === "cycle-success" || status === "captured" || status === "filled" || status === "clicked") return "ok";
+    if (status === "skipped-dryrun") return "warn";
+    return "info";
+  }
+
+  private statusIcon(status: string): string {
+    if (status === "missing" || status === "cycle-failure") return "✗";
+    if (status === "cycle-success") return "✓";
+    if (status === "captured") return "◆";
+    if (status === "filled") return "✎";
+    if (status === "clicked") return "▶";
+    if (status === "found") return "•";
+    if (status === "skipped-dryrun") return "⏸";
+    if (status === "cycle-start") return "▷";
+    return "·";
+  }
+
+  private stepLabel(step: string): string {
+    switch (step) {
+      case "fillEmail":            return "Email field";
+      case "clickGeneratePassword":return "Generate";
+      case "capturePassword":      return "Password";
+      case "clickCreate":          return "Create";
+      case "verifyCreate":         return "Verify";
+      case "cycle":                return "Cycle";
+      default:                     return step;
+    }
+  }
+
   private refreshLiveCapture(s: LiveCaptureState): void {
     if (!this.liveEmailEl) return;
     this.liveEmailEl.textContent    = s.email    || "—";
