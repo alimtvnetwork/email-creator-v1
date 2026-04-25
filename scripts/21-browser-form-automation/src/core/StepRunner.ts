@@ -85,6 +85,9 @@ export class StepRunner {
     this.clickElement(el, this.xpaths().createButton);
     const delayMs = await this.delays.postCreate();
     this.events.record({ step: "clickCreate", status: "clicked", attempts, delayMs });
+    const result = await this.verifier.verify();
+    this.verifier.dismissLeftoverDialogs();
+    if (!result.ok) throw new Error("Create not verified: " + result.reason);
   }
 
 
