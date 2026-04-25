@@ -93,6 +93,7 @@ export class Panel {
         this.buildDelaySection(),
         this.buildRuntimeSection(),
         this.buildControls(),
+        this.buildStepStatusSection(),
         this.buildLiveCapture(),
         this.buildResultsSection(),
         this.buildLog(),
