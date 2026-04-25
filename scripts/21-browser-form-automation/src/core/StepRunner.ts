@@ -14,6 +14,7 @@ import { StepEventLog } from "./StepEventLog";
 import { LiveCapture } from "./LiveCapture";
 import { PasswordCapture } from "./PasswordCapture";
 import { CreateVerifier } from "./CreateVerifier";
+import { ElementHighlighter } from "./ElementHighlighter";
 
 const HIGHLIGHT_MS = 600;
 const HIGHLIGHT_STYLE = "2px solid #f59e0b";
@@ -33,8 +34,9 @@ export class StepRunner {
     private readonly retry: RetryPolicy,
     private readonly events: StepEventLog,
     live: LiveCapture,
+    private readonly highlighter: ElementHighlighter,
   ) {
-    this.passwordCapture = new PasswordCapture(xpaths, resolver, log, retry, events, live);
+    this.passwordCapture = new PasswordCapture(xpaths, resolver, log, retry, events, live, highlighter);
     this.verifier = new CreateVerifier(xpaths, resolver, log, events);
   }
 
@@ -43,8 +45,10 @@ export class StepRunner {
     const { el, attempts } = await this.resolveStep("fillEmail", "emailField", this.xpaths().emailField);
     const value = this.emailValueForField(email, el);
     if (this.isDryRun()) return this.skipWithDelay(el, "fillEmail", attempts, 'would fill email "' + value + '"');
+    this.highlighter.highlight("emailField", "click", el);
     this.clickElement(el, this.xpaths().emailField);
     await this.delays.betweenSteps();
+    this.highlighter.highlight("emailField", "fill", el);
     this.setter.setValue(el, value);
     this.setter.blur(el);
     this.log.info("step", 'Email field set to "' + value + '" for account "' + email + '"');
@@ -57,6 +61,7 @@ export class StepRunner {
     const { el, attempts } = await this.resolveStep("clickGeneratePassword", "passwordGenerate", this.xpaths().passwordGenerate);
     if (this.isDryRun()) return this.skipWithDelay(el, "clickGeneratePassword", attempts, "would click passwordGenerate").then(() => "");
     const before = this.passwordCapture.snapshotBeforeGenerate();
+    this.highlighter.highlight("passwordGenerate", "click", el);
     this.clickElement(el, this.xpaths().passwordGenerate);
     const delayMs = await this.delays.betweenSteps();
     this.events.record({ step: "clickGeneratePassword", status: "clicked", attempts, delayMs });
@@ -68,6 +73,7 @@ export class StepRunner {
     const xpath = this.xpaths().passwordGenerate;
     const el = this.resolver.resolve(xpath);
     if (!el) { this.log.warn("step", "Generate button missing on retry"); return; }
+    this.highlighter.highlight("passwordGenerate", "click", el);
     this.clickElement(el, xpath);
     const delayMs = await this.delays.betweenSteps();
     this.events.record({ step: "clickGeneratePassword", status: "clicked", attempts: 1, delayMs });
@@ -82,6 +88,7 @@ export class StepRunner {
       this.events.record({ step: "clickCreate", status: "skipped-dryrun", attempts, delayMs });
       return;
     }
+    this.highlighter.highlight("createButton", "click", el);
     this.clickElement(el, this.xpaths().createButton);
     const delayMs = await this.delays.postCreate();
     this.events.record({ step: "clickCreate", status: "clicked", attempts, delayMs });

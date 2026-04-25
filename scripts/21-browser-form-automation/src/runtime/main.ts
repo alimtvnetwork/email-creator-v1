@@ -17,6 +17,7 @@ import { LiveCapture } from "../core/LiveCapture";
 import { XPathResolver } from "../xpath/resolver";
 import { XPathValidator } from "../core/XPathValidator";
 import { HotkeyController } from "../core/HotkeyController";
+import { ElementHighlighter } from "../core/ElementHighlighter";
 import { Panel } from "../ui/Panel";
 
 declare global { interface Window { __xp21Mounted?: boolean; } }
@@ -46,7 +47,8 @@ function bootstrap(): void {
   const retry = new RetryPolicy(() => config.delays, logger);
   const events = new StepEventLog();
   const live = new LiveCapture();
-  const runner = new StepRunner(() => config.xpaths, () => config.runtime, resolver, setter, delays, logger, retry, events, live);
+  const highlighter = new ElementHighlighter();
+  const runner = new StepRunner(() => config.xpaths, () => config.runtime, resolver, setter, delays, logger, retry, events, live, highlighter);
   const ledger = new CycleLedger();
   const csv = new CsvExporter();
   const configCsv = new ConfigCsvExporter();

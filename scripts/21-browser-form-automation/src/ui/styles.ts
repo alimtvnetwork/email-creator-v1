@@ -71,6 +71,27 @@ export const PANEL_CSS = `
   .live-pw  { color: #fde68a; }
   .live-src { color: #94a3b8; font-style: italic; }
 
+  .step-status { display: flex; flex-direction: column; gap: 4px; }
+  .step-empty { font-size: 11px; color: #6b7280; font-style: italic; }
+  .step-row {
+    display: grid; grid-template-columns: 14px 76px 80px 1fr;
+    gap: 6px; align-items: baseline;
+    font-family: ui-monospace, monospace; font-size: 11px;
+    padding: 3px 6px; border-radius: 3px; background: #0b1220; border-left: 2px solid #1f2937;
+  }
+  .step-row .step-icon { font-weight: 700; text-align: center; }
+  .step-row .step-time { color: #6b7280; font-size: 10px; }
+  .step-row .step-name { color: #cbd5e1; font-weight: 600; }
+  .step-row .step-status-text { color: #94a3b8; word-break: break-word; }
+  .step-row.step-ok   { border-left-color: #22c55e; }
+  .step-row.step-ok   .step-icon { color: #22c55e; }
+  .step-row.step-fail { border-left-color: #ef4444; background: rgba(239,68,68,.08); }
+  .step-row.step-fail .step-icon { color: #ef4444; }
+  .step-row.step-warn { border-left-color: #f59e0b; }
+  .step-row.step-warn .step-icon { color: #f59e0b; }
+  .step-row.step-info { border-left-color: #3b82f6; }
+  .step-row.step-info .step-icon { color: #3b82f6; }
+
   .toast-host {
     position: absolute; bottom: 12px; left: 12px; right: 12px;
     display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 10;
