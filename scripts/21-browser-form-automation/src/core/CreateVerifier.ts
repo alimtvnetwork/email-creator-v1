@@ -18,10 +18,15 @@ import { StepEventLog } from "./StepEventLog";
 const VERIFY_TIMEOUT_MS = 8000;
 const POLL_INTERVAL_MS = 250;
 const SUCCESS_PATTERNS = [
-  /account.*(created|added|successfully)/i,
+  /success:\s*you created/i,           // exact cPanel toast: "Success: You created ..."
+  /you\s+created\s+["“']?[^"”']+@/i,   // "You created \"foo@bar\""
   /successfully\s+created/i,
   /has been created/i,
-  /\bsuccess\b/i,
+  /account.*(created|added)/i,
+];
+const SUCCESS_CONTAINER_SELECTORS = [
+  ".alert-success", ".cjt-notice-success", ".notice-success",
+  "[role='alert'].alert-success",
 ];
 const ERROR_PATTERNS = [
   /\berror\b/i,
@@ -30,6 +35,11 @@ const ERROR_PATTERNS = [
   /invalid/i,
   /not allowed/i,
   /cannot/i,
+];
+const ERROR_CONTAINER_SELECTORS = [
+  ".alert-danger", ".alert-error", ".alert-warning",
+  ".cjt-notice-danger", ".cjt-notice-error", ".cjt-notice-warn",
+  ".notice-danger", ".notice-error",
 ];
 const NOTICE_SELECTORS = [
   ".alert-success", ".alert-danger", ".alert-warning", ".alert-error",
