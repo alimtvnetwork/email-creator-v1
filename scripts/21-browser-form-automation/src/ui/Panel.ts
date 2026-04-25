@@ -51,6 +51,7 @@ export class Panel {
   private liveEmailEl!: HTMLSpanElement;
   private livePasswordEl!: HTMLSpanElement;
   private liveSourceEl!: HTMLSpanElement;
+  private stepStatusEl!: HTMLDivElement;
   private toast!: ToastHost;
   private unsubscribeLedger?: () => void;
   private unsubscribeProgress?: () => void;
