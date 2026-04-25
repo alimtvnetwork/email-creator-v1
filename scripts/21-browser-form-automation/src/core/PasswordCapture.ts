@@ -7,6 +7,7 @@ import { Logger } from "./Logger";
 import { RetryPolicy } from "./RetryPolicy";
 import { StepEventLog } from "./StepEventLog";
 import { LiveCapture } from "./LiveCapture";
+import { ElementHighlighter } from "./ElementHighlighter";
 
 const PASSWORD_WAIT_MS = 6000;
 const PASSWORD_POLL_MS = 100;
@@ -33,6 +34,7 @@ export class PasswordCapture {
     private readonly retry: RetryPolicy,
     private readonly events: StepEventLog,
     private readonly live: LiveCapture,
+    private readonly highlighter: ElementHighlighter,
   ) {}
 
   snapshotBeforeGenerate(): PasswordBaseline {
