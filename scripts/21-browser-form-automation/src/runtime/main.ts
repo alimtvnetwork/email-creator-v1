@@ -17,6 +17,7 @@ import { LiveCapture } from "../core/LiveCapture";
 import { XPathResolver } from "../xpath/resolver";
 import { XPathValidator } from "../core/XPathValidator";
 import { HotkeyController } from "../core/HotkeyController";
+import { ElementHighlighter } from "../core/ElementHighlighter";
 import { Panel } from "../ui/Panel";
 
 declare global { interface Window { __xp21Mounted?: boolean; } }
