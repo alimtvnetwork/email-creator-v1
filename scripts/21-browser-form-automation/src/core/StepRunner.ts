@@ -13,6 +13,7 @@ import { RetryPolicy } from "./RetryPolicy";
 import { StepEventLog } from "./StepEventLog";
 import { LiveCapture } from "./LiveCapture";
 import { PasswordCapture } from "./PasswordCapture";
+import { CreateVerifier } from "./CreateVerifier";
 
 const HIGHLIGHT_MS = 600;
 const HIGHLIGHT_STYLE = "2px solid #f59e0b";
@@ -20,6 +21,7 @@ const HIGHLIGHT_SHADOW = "0 0 0 3px rgba(245,158,11,.35)";
 
 export class StepRunner {
   private readonly passwordCapture: PasswordCapture;
+  private readonly verifier: CreateVerifier;
 
   constructor(
     private readonly xpaths: () => XPathConfig,
@@ -33,6 +35,7 @@ export class StepRunner {
     live: LiveCapture,
   ) {
     this.passwordCapture = new PasswordCapture(xpaths, resolver, log, retry, events, live);
+    this.verifier = new CreateVerifier(xpaths, resolver, log, events);
   }
 
   /** Click the email field, type the address, then wait the inter-step delay. */
