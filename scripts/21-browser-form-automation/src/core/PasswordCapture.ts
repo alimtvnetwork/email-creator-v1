@@ -82,6 +82,7 @@ export class PasswordCapture {
     try {
       const { el, attempts } = await this.resolveStep(name, xpath);
       const value = await this.waitForNewPassword(el, xpath, before);
+      if (value) this.highlighter.highlight("passwordField", "capture", el);
       return { name, value, attempts };
     } catch (err) {
       this.log.warn("step", name + " unavailable: " + (err as Error).message);
