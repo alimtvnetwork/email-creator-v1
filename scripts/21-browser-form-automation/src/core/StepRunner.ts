@@ -14,6 +14,7 @@ import { StepEventLog } from "./StepEventLog";
 import { LiveCapture } from "./LiveCapture";
 import { PasswordCapture } from "./PasswordCapture";
 import { CreateVerifier } from "./CreateVerifier";
+import { ElementHighlighter, type HighlightStep } from "./ElementHighlighter";
 
 const HIGHLIGHT_MS = 600;
 const HIGHLIGHT_STYLE = "2px solid #f59e0b";
@@ -33,8 +34,9 @@ export class StepRunner {
     private readonly retry: RetryPolicy,
     private readonly events: StepEventLog,
     live: LiveCapture,
+    private readonly highlighter: ElementHighlighter,
   ) {
-    this.passwordCapture = new PasswordCapture(xpaths, resolver, log, retry, events, live);
+    this.passwordCapture = new PasswordCapture(xpaths, resolver, log, retry, events, live, highlighter);
     this.verifier = new CreateVerifier(xpaths, resolver, log, events);
   }
 
