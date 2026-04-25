@@ -14,7 +14,7 @@ import { StepEventLog } from "./StepEventLog";
 import { LiveCapture } from "./LiveCapture";
 import { PasswordCapture } from "./PasswordCapture";
 import { CreateVerifier } from "./CreateVerifier";
-import { ElementHighlighter, type HighlightStep } from "./ElementHighlighter";
+import { ElementHighlighter } from "./ElementHighlighter";
 
 const HIGHLIGHT_MS = 600;
 const HIGHLIGHT_STYLE = "2px solid #f59e0b";
