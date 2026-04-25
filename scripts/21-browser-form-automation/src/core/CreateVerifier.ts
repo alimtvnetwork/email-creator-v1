@@ -94,19 +94,23 @@ export class CreateVerifier {
   }
 
   private findSuccessSignal(beforeValue: string | null): string | null {
-    const noticeText = this.matchNoticeText(SUCCESS_PATTERNS);
-    if (noticeText) return "notice: " + noticeText;
+    const inSuccessBox = this.matchInContainers(SUCCESS_CONTAINER_SELECTORS, SUCCESS_PATTERNS);
+    if (inSuccessBox) return "success notice: " + inSuccessBox;
+    const generic = this.matchInContainers(NOTICE_SELECTORS, SUCCESS_PATTERNS);
+    if (generic) return "notice: " + generic;
     const fieldGone = this.emailFieldDisappearedOrCleared(beforeValue);
     if (fieldGone) return fieldGone;
     return null;
   }
 
   private findErrorSignal(): string | null {
-    return this.matchNoticeText(ERROR_PATTERNS);
+    const inErrorBox = this.matchInContainers(ERROR_CONTAINER_SELECTORS, [/.+/]);
+    if (inErrorBox) return inErrorBox;
+    return this.matchInContainers(NOTICE_SELECTORS, ERROR_PATTERNS);
   }
 
-  private matchNoticeText(patterns: RegExp[]): string | null {
-    for (const sel of NOTICE_SELECTORS) {
+  private matchInContainers(selectors: string[], patterns: RegExp[]): string | null {
+    for (const sel of selectors) {
       const nodes = document.querySelectorAll<HTMLElement>(sel);
       for (const node of Array.from(nodes)) {
         if (!this.isVisible(node)) continue;
