@@ -403,6 +403,7 @@ export class Panel {
       this.buildDelaySection(),
       this.buildRuntimeSection(),
       this.buildControls(),
+      this.buildStepStatusSection(),
       this.buildLiveCapture(),
       this.buildResultsSection(),
       this.buildLog(),
@@ -410,6 +411,7 @@ export class Panel {
     this.deps.logger.snapshot().forEach((line) => this.appendLog(line));
     this.refreshResults(this.deps.ledger.snapshot());
     this.refreshEventCount(this.deps.events.snapshot());
+    this.refreshStepStatus(this.deps.events.snapshot());
     this.refreshLiveCapture(this.deps.live.snapshot());
     this.refreshPreview();
   }
