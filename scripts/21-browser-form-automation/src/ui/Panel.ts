@@ -75,11 +75,15 @@ export class Panel {
     this.unsubscribeProgress?.();
     this.unsubscribeProgress = this.deps.orchestrator.subscribe((p) => this.refreshProgress(p));
     this.unsubscribeEvents?.();
-    this.unsubscribeEvents = this.deps.events.subscribe((evs) => this.refreshEventCount(evs));
+    this.unsubscribeEvents = this.deps.events.subscribe((evs) => {
+      this.refreshEventCount(evs);
+      this.refreshStepStatus(evs);
+    });
     this.unsubscribeLive?.();
     this.unsubscribeLive = this.deps.live.subscribe((s) => this.refreshLiveCapture(s));
     this.refreshResults(this.deps.ledger.snapshot());
     this.refreshEventCount(this.deps.events.snapshot());
+    this.refreshStepStatus(this.deps.events.snapshot());
     this.refreshPreview();
   }
 
