@@ -18,10 +18,15 @@ import { StepEventLog } from "./StepEventLog";
 const VERIFY_TIMEOUT_MS = 8000;
 const POLL_INTERVAL_MS = 250;
 const SUCCESS_PATTERNS = [
-  /account.*(created|added|successfully)/i,
+  /success:\s*you created/i,           // exact cPanel toast: "Success: You created ..."
+  /you\s+created\s+["“']?[^"”']+@/i,   // "You created \"foo@bar\""
   /successfully\s+created/i,
   /has been created/i,
-  /\bsuccess\b/i,
+  /account.*(created|added)/i,
+];
+const SUCCESS_CONTAINER_SELECTORS = [
+  ".alert-success", ".cjt-notice-success", ".notice-success",
+  "[role='alert'].alert-success",
 ];
 const ERROR_PATTERNS = [
   /\berror\b/i,
@@ -30,6 +35,11 @@ const ERROR_PATTERNS = [
   /invalid/i,
   /not allowed/i,
   /cannot/i,
+];
+const ERROR_CONTAINER_SELECTORS = [
+  ".alert-danger", ".alert-error", ".alert-warning",
+  ".cjt-notice-danger", ".cjt-notice-error", ".cjt-notice-warn",
+  ".notice-danger", ".notice-error",
 ];
 const NOTICE_SELECTORS = [
   ".alert-success", ".alert-danger", ".alert-warning", ".alert-error",
@@ -84,19 +94,23 @@ export class CreateVerifier {
   }
 
   private findSuccessSignal(beforeValue: string | null): string | null {
-    const noticeText = this.matchNoticeText(SUCCESS_PATTERNS);
-    if (noticeText) return "notice: " + noticeText;
+    const inSuccessBox = this.matchInContainers(SUCCESS_CONTAINER_SELECTORS, SUCCESS_PATTERNS);
+    if (inSuccessBox) return "success notice: " + inSuccessBox;
+    const generic = this.matchInContainers(NOTICE_SELECTORS, SUCCESS_PATTERNS);
+    if (generic) return "notice: " + generic;
     const fieldGone = this.emailFieldDisappearedOrCleared(beforeValue);
     if (fieldGone) return fieldGone;
     return null;
   }
 
   private findErrorSignal(): string | null {
-    return this.matchNoticeText(ERROR_PATTERNS);
+    const inErrorBox = this.matchInContainers(ERROR_CONTAINER_SELECTORS, [/.+/]);
+    if (inErrorBox) return inErrorBox;
+    return this.matchInContainers(NOTICE_SELECTORS, ERROR_PATTERNS);
   }
 
-  private matchNoticeText(patterns: RegExp[]): string | null {
-    for (const sel of NOTICE_SELECTORS) {
+  private matchInContainers(selectors: string[], patterns: RegExp[]): string | null {
+    for (const sel of selectors) {
       const nodes = document.querySelectorAll<HTMLElement>(sel);
       for (const node of Array.from(nodes)) {
         if (!this.isVisible(node)) continue;
